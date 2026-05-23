@@ -23,6 +23,8 @@ export interface DifficultyParams {
   negationProb: number;
   /** Probability that the command has two clauses instead of one. */
   compoundProb: number;
+  /** Probability that the command targets both flags at once ("둘다 …"). */
+  bothProb: number;
   /** Milliseconds the player has to settle on the target state after speech ends. */
   timeLimitMs: number;
   /** SpeechSynthesisUtterance.rate — scales with round to accelerate command speech. */

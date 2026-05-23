@@ -59,10 +59,34 @@ export function buildCommand(current: FlagsState, clauses: Clause[]): Command {
   return { text: parts.join(' '), target };
 }
 
+/**
+ * Build a "둘다" command that targets both flags with the same action.
+ * Negated form leaves the current state unchanged; positive form sets
+ * both flags to `pos`.
+ */
+export function buildBothCommand(
+  current: FlagsState,
+  pos: ActionPos,
+  negated: boolean,
+): Command {
+  const forms = ACTION_FORMS[pos];
+  const action = negated ? forms.termN : forms.term;
+  const text = `청기 백기 둘다 ${action}`;
+  const target: FlagsState = negated ? current : { blue: pos, white: pos };
+  return { text, target };
+}
+
 export class CommandGenerator {
   constructor(private readonly rng: () => number) {}
 
   next(current: FlagsState, params: DifficultyParams): Command {
+    if (this.rng() < params.bothProb) {
+      return buildBothCommand(
+        current,
+        this.rng() < 0.5 ? 'UP' : 'DOWN',
+        this.rng() < params.negationProb,
+      );
+    }
     const compound = this.rng() < params.compoundProb;
     const clauses: Clause[] = compound
       ? this.compoundClauses(params.negationProb)

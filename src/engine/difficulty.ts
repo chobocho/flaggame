@@ -5,6 +5,8 @@ import {
   FINAL_NEGATION_PROB,
   INITIAL_COMPOUND_PROB,
   FINAL_COMPOUND_PROB,
+  INITIAL_BOTH_PROB,
+  FINAL_BOTH_PROB,
   ROUNDS_TO_MAX,
   TTS_RATE_MIN,
   TTS_RATE_MAX,
@@ -21,6 +23,7 @@ export function difficultyForRound(roundIndex: number): DifficultyParams {
     timeLimitMs: lerp(INITIAL_TIME_LIMIT_MS, FINAL_TIME_LIMIT_MS, t),
     negationProb: lerp(INITIAL_NEGATION_PROB, FINAL_NEGATION_PROB, t),
     compoundProb: lerp(INITIAL_COMPOUND_PROB, FINAL_COMPOUND_PROB, t),
+    bothProb: lerp(INITIAL_BOTH_PROB, FINAL_BOTH_PROB, t),
     ttsRate: lerp(TTS_RATE_MIN, TTS_RATE_MAX, t),
   };
 }

@@ -79,6 +79,8 @@ export const INITIAL_NEGATION_PROB = 0.0;
 export const FINAL_NEGATION_PROB = 0.4;
 export const INITIAL_COMPOUND_PROB = 0.0;
 export const FINAL_COMPOUND_PROB = 0.6;
+export const INITIAL_BOTH_PROB = 0.1;
+export const FINAL_BOTH_PROB = 0.25;
 export const ROUNDS_TO_MAX = 15;
 
 // TTS
