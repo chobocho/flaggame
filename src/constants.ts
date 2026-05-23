@@ -1,3 +1,5 @@
+import type { KeyBinding } from './types';
+
 // Virtual coordinate system. The canvas is letterboxed to preserve this ratio
 // across all device sizes (Galaxy Fold cover/main, desktop, etc.).
 export const VIRTUAL_WIDTH = 800;
@@ -36,6 +38,51 @@ export const TTS_FALLBACK_MIN_MS = 800;
 // Start screen (Phase 4)
 export const START_PROMPT = '아무 키나 눌러 시작';
 export const START_PROMPT_SIZE = 32;
+
+// Phase 5 — gameplay tuning
+export const INITIAL_LIVES = 3;
+export const SCORE_PER_ROUND = 100;
+export const SCORE_PER_COMBO = 20;
+export const JUDGE_HOLD_MS = 700;
+
+// Phase 5 — key bindings (mapped from KeyboardEvent.code)
+export const KEY_BINDINGS: Record<string, KeyBinding> = {
+  KeyQ: { side: 'blue',  pos: 'UP'   },
+  KeyA: { side: 'blue',  pos: 'DOWN' },
+  KeyP: { side: 'white', pos: 'UP'   },
+  KeyL: { side: 'white', pos: 'DOWN' },
+};
+
+// Phase 5 — HUD layout & colors
+export const HUD_FONT = 'system-ui, sans-serif';
+export const HUD_TOP_Y = 38;
+export const HUD_SCORE_X = 40;
+export const HUD_SCORE_SIZE = 26;
+export const HUD_LIFE_X = 760;
+export const HUD_LIFE_SIZE = 26;
+export const HUD_LIFE_COLOR = '#ef4444';
+
+// Timer bar (Phase 5)
+export const TIMER_BAR_X = 200;
+export const TIMER_BAR_Y = 150;
+export const TIMER_BAR_W = 400;
+export const TIMER_BAR_H = 12;
+export const TIMER_BAR_BG = '#334155';
+export const TIMER_BAR_FG = '#10b981';
+
+// Outcome banner (Phase 5)
+export const OUTCOME_SUCCESS_TEXT = '성공!';
+export const OUTCOME_FAIL_TEXT = '실패!';
+export const OUTCOME_FONT_SIZE = 60;
+export const OUTCOME_SUCCESS_COLOR = '#10b981';
+export const OUTCOME_FAIL_COLOR = '#ef4444';
+
+// Game over (Phase 5)
+export const GAMEOVER_TITLE = 'GAME OVER';
+export const GAMEOVER_TITLE_SIZE = 64;
+export const GAMEOVER_TITLE_COLOR = '#ef4444';
+export const GAMEOVER_HINT = 'R 키를 눌러 다시 시작';
+export const GAMEOVER_HINT_SIZE = 26;
 
 // Character colors
 export const SKIN_COLOR = '#facc15';

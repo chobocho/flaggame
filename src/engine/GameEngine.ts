@@ -8,6 +8,7 @@ import { Renderer } from '../render/Renderer';
 import { StateManager } from './StateManager';
 import { CommandGenerator } from '../command/CommandGenerator';
 import { VoiceManager } from '../audio/VoiceManager';
+import { InputManager } from '../input/InputManager';
 import { mulberry32 } from '../util/rng';
 import {
   INITIAL_TIME_LIMIT_MS,
@@ -20,12 +21,12 @@ export class GameEngine {
   private readonly ctx: CanvasRenderingContext2D;
   private readonly renderer: Renderer;
   private readonly stateManager: StateManager;
+  private readonly input: InputManager;
   private viewport: ViewportTransform;
   private lastTime = 0;
   private running = false;
   private rafId = 0;
   private disposeResize: () => void;
-  private disposeKeys: () => void;
 
   constructor(canvas: HTMLCanvasElement) {
     const ctx = canvas.getContext('2d');
@@ -38,23 +39,20 @@ export class GameEngine {
     });
 
     const seed = (Date.now() ^ Math.floor(Math.random() * 0xffffffff)) >>> 0;
-    this.stateManager = new StateManager(
-      {
-        generator: new CommandGenerator(mulberry32(seed)),
-        voice: new VoiceManager(),
-        difficulty: defaultDifficulty,
-      },
-      { blue: 'DOWN', white: 'DOWN' },
-    );
+    this.stateManager = new StateManager({
+      generator: new CommandGenerator(mulberry32(seed)),
+      voice: new VoiceManager(),
+      difficulty: defaultDifficulty,
+    });
 
-    const onKey = (_e: KeyboardEvent) => this.stateManager.startRound();
-    const onPointer = () => this.stateManager.startRound();
-    window.addEventListener('keydown', onKey);
-    window.addEventListener('pointerdown', onPointer);
-    this.disposeKeys = () => {
-      window.removeEventListener('keydown', onKey);
-      window.removeEventListener('pointerdown', onPointer);
-    };
+    this.input = new InputManager({
+      onAnyKey: code => {
+        const sm = this.stateManager;
+        if (sm.state.phase === 'IDLE') sm.startRound();
+        else if (sm.state.phase === 'GAME_OVER' && code === 'KeyR') sm.restart();
+      },
+      onFlagKey: (side, pos) => this.stateManager.setFlag(side, pos),
+    });
   }
 
   start(): void {
@@ -76,7 +74,7 @@ export class GameEngine {
     this.running = false;
     cancelAnimationFrame(this.rafId);
     this.disposeResize();
-    this.disposeKeys();
+    this.input.dispose();
     this.stateManager.stop();
   }
 
@@ -87,7 +85,7 @@ export class GameEngine {
 }
 
 function defaultDifficulty(_roundIndex: number): DifficultyParams {
-  // Phase 4: constant difficulty. Phase 6 will interpolate by round.
+  // Phase 5: still constant. Phase 6 will interpolate by round.
   return {
     timeLimitMs: INITIAL_TIME_LIMIT_MS,
     negationProb: INITIAL_NEGATION_PROB,

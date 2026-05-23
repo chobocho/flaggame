@@ -11,6 +11,13 @@ export interface Command {
   target: FlagsState;
 }
 
+export interface KeyBinding {
+  side: FlagSide;
+  pos: FlagPos;
+}
+
+export type Outcome = 'SUCCESS' | 'FAIL';
+
 export interface DifficultyParams {
   /** Probability that any single clause is phrased as a negation. */
   negationProb: number;
