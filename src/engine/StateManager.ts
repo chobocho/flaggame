@@ -134,6 +134,10 @@ export class StateManager {
   private async runLoop(): Promise<void> {
     while (!this.loopAbort) {
       const params = this.deps.difficulty(this.state.roundIndex);
+      // Reset flags to the neutral position before each round so the player
+      // always starts from the same baseline; the generator then plans its
+      // command relative to this fresh state.
+      this.state.flags = { ...INITIAL_FLAGS };
       const cmd = this.deps.generator.next(this.state.flags, params);
       this.state.command = cmd;
       this.state.outcome = null;
