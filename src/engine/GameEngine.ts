@@ -4,34 +4,44 @@ import {
   observeResize,
   type ViewportTransform,
 } from '../util/canvas';
-import {
-  VIRTUAL_WIDTH,
-  VIRTUAL_HEIGHT,
-  BG_COLOR,
-  TEXT_COLOR,
-  ACCENT_COLOR,
-  BOOT_TITLE,
-  BOOT_SUBTITLE,
-  BOOT_TITLE_SIZE,
-  BOOT_SUBTITLE_SIZE,
-} from '../constants';
+import { Renderer } from '../render/Renderer';
+import type { FlagsState } from '../types';
 
 export class GameEngine {
   private readonly ctx: CanvasRenderingContext2D;
+  private readonly renderer: Renderer;
   private viewport: ViewportTransform;
   private lastTime = 0;
   private running = false;
   private rafId = 0;
   private disposeResize: () => void;
 
+  // Phase 2: flag state is mutated directly via debug keys (Q/A/P/L) so we can
+  // visually verify all four combinations. Phase 5 will route the same keys
+  // through a proper InputManager + StateManager.
+  private flags: FlagsState = { blue: 'DOWN', white: 'DOWN' };
+  private disposeKeys: () => void;
+
   constructor(canvas: HTMLCanvasElement) {
     const ctx = canvas.getContext('2d');
     if (!ctx) throw new Error('2D canvas context unavailable');
     this.ctx = ctx;
+    this.renderer = new Renderer(ctx);
     this.viewport = fitCanvas(canvas);
     this.disposeResize = observeResize(canvas, () => {
       this.viewport = fitCanvas(canvas);
     });
+
+    const onKey = (e: KeyboardEvent) => {
+      switch (e.code) {
+        case 'KeyQ': this.flags = { ...this.flags, blue: 'UP' }; break;
+        case 'KeyA': this.flags = { ...this.flags, blue: 'DOWN' }; break;
+        case 'KeyP': this.flags = { ...this.flags, white: 'UP' }; break;
+        case 'KeyL': this.flags = { ...this.flags, white: 'DOWN' }; break;
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    this.disposeKeys = () => window.removeEventListener('keydown', onKey);
   }
 
   start(): void {
@@ -53,29 +63,15 @@ export class GameEngine {
     this.running = false;
     cancelAnimationFrame(this.rafId);
     this.disposeResize();
+    this.disposeKeys();
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   private update(_dt: number): void {
-    // Phase 1: no game state yet.
+    // Phase 2: no time-based state yet.
   }
 
   private render(): void {
-    const ctx = this.ctx;
-    applyViewport(ctx, this.viewport);
-
-    ctx.fillStyle = BG_COLOR;
-    ctx.fillRect(0, 0, VIRTUAL_WIDTH, VIRTUAL_HEIGHT);
-
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-
-    ctx.fillStyle = TEXT_COLOR;
-    ctx.font = `bold ${BOOT_TITLE_SIZE}px system-ui, sans-serif`;
-    ctx.fillText(BOOT_TITLE, VIRTUAL_WIDTH / 2, VIRTUAL_HEIGHT / 2 - 40);
-
-    ctx.fillStyle = ACCENT_COLOR;
-    ctx.font = `${BOOT_SUBTITLE_SIZE}px system-ui, sans-serif`;
-    ctx.fillText(BOOT_SUBTITLE, VIRTUAL_WIDTH / 2, VIRTUAL_HEIGHT / 2 + 40);
+    applyViewport(this.ctx, this.viewport);
+    this.renderer.draw({ flags: this.flags });
   }
 }
