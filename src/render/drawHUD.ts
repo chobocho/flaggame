@@ -17,7 +17,7 @@ import {
   TIMER_BAR_W,
   TIMER_BAR_H,
   TIMER_BAR_BG,
-  TIMER_BAR_FG,
+  TIMER_BAR_RAINBOW,
   OUTCOME_SUCCESS_TEXT,
   OUTCOME_FAIL_TEXT,
   OUTCOME_FONT_SIZE,
@@ -192,8 +192,17 @@ function drawTimerBar(
   const x = (vw - w) / 2;
   ctx.fillStyle = TIMER_BAR_BG;
   ctx.fillRect(x, TIMER_BAR_TOP, w, TIMER_BAR_H);
+
   const ratio = total > 0 ? Math.max(0, Math.min(1, remaining / total)) : 0;
-  ctx.fillStyle = TIMER_BAR_FG;
+  if (ratio <= 0) return;
+
+  // Gradient spans the full bar so hues stay anchored as the bar drains.
+  const gradient = ctx.createLinearGradient(x, TIMER_BAR_TOP, x + w, TIMER_BAR_TOP);
+  const stops = TIMER_BAR_RAINBOW;
+  for (let i = 0; i < stops.length; i++) {
+    gradient.addColorStop(i / (stops.length - 1), stops[i]!);
+  }
+  ctx.fillStyle = gradient;
   ctx.fillRect(x, TIMER_BAR_TOP, w * ratio, TIMER_BAR_H);
 }
 

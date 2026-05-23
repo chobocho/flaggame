@@ -142,7 +142,17 @@ export const TIMER_BAR_TOP = SUBTITLE_PANEL_TOP + SUBTITLE_PANEL_H + 12;
 export const TIMER_BAR_W = 320;
 export const TIMER_BAR_H = 10;
 export const TIMER_BAR_BG = '#334155';
-export const TIMER_BAR_FG = '#10b981';
+/** Rainbow stops (red→violet) painted across the FULL bar width so the
+ *  hue under each position stays fixed as the bar shrinks from the right. */
+export const TIMER_BAR_RAINBOW: ReadonlyArray<string> = [
+  '#ef4444', // red
+  '#f97316', // orange
+  '#facc15', // yellow
+  '#22c55e', // green
+  '#06b6d4', // cyan
+  '#3b82f6', // blue
+  '#8b5cf6', // violet
+];
 
 // Outcome banner
 export const OUTCOME_SUCCESS_TEXT = '성공!';
