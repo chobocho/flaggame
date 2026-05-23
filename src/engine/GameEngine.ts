@@ -5,21 +5,26 @@ import {
   type ViewportTransform,
 } from '../util/canvas';
 import { Renderer } from '../render/Renderer';
-import type { FlagsState } from '../types';
+import { StateManager } from './StateManager';
+import { CommandGenerator } from '../command/CommandGenerator';
+import { VoiceManager } from '../audio/VoiceManager';
+import { mulberry32 } from '../util/rng';
+import {
+  INITIAL_TIME_LIMIT_MS,
+  INITIAL_NEGATION_PROB,
+  INITIAL_COMPOUND_PROB,
+} from '../constants';
+import type { DifficultyParams } from '../types';
 
 export class GameEngine {
   private readonly ctx: CanvasRenderingContext2D;
   private readonly renderer: Renderer;
+  private readonly stateManager: StateManager;
   private viewport: ViewportTransform;
   private lastTime = 0;
   private running = false;
   private rafId = 0;
   private disposeResize: () => void;
-
-  // Phase 2: flag state is mutated directly via debug keys (Q/A/P/L) so we can
-  // visually verify all four combinations. Phase 5 will route the same keys
-  // through a proper InputManager + StateManager.
-  private flags: FlagsState = { blue: 'DOWN', white: 'DOWN' };
   private disposeKeys: () => void;
 
   constructor(canvas: HTMLCanvasElement) {
@@ -32,16 +37,24 @@ export class GameEngine {
       this.viewport = fitCanvas(canvas);
     });
 
-    const onKey = (e: KeyboardEvent) => {
-      switch (e.code) {
-        case 'KeyQ': this.flags = { ...this.flags, blue: 'UP' }; break;
-        case 'KeyA': this.flags = { ...this.flags, blue: 'DOWN' }; break;
-        case 'KeyP': this.flags = { ...this.flags, white: 'UP' }; break;
-        case 'KeyL': this.flags = { ...this.flags, white: 'DOWN' }; break;
-      }
-    };
+    const seed = (Date.now() ^ Math.floor(Math.random() * 0xffffffff)) >>> 0;
+    this.stateManager = new StateManager(
+      {
+        generator: new CommandGenerator(mulberry32(seed)),
+        voice: new VoiceManager(),
+        difficulty: defaultDifficulty,
+      },
+      { blue: 'DOWN', white: 'DOWN' },
+    );
+
+    const onKey = (_e: KeyboardEvent) => this.stateManager.startRound();
+    const onPointer = () => this.stateManager.startRound();
     window.addEventListener('keydown', onKey);
-    this.disposeKeys = () => window.removeEventListener('keydown', onKey);
+    window.addEventListener('pointerdown', onPointer);
+    this.disposeKeys = () => {
+      window.removeEventListener('keydown', onKey);
+      window.removeEventListener('pointerdown', onPointer);
+    };
   }
 
   start(): void {
@@ -52,7 +65,7 @@ export class GameEngine {
       if (!this.running) return;
       const dt = Math.min(0.1, (now - this.lastTime) / 1000);
       this.lastTime = now;
-      this.update(dt);
+      this.stateManager.tick(dt);
       this.render();
       this.rafId = requestAnimationFrame(loop);
     };
@@ -64,14 +77,20 @@ export class GameEngine {
     cancelAnimationFrame(this.rafId);
     this.disposeResize();
     this.disposeKeys();
-  }
-
-  private update(_dt: number): void {
-    // Phase 2: no time-based state yet.
+    this.stateManager.stop();
   }
 
   private render(): void {
     applyViewport(this.ctx, this.viewport);
-    this.renderer.draw({ flags: this.flags });
+    this.renderer.draw(this.stateManager.state);
   }
+}
+
+function defaultDifficulty(_roundIndex: number): DifficultyParams {
+  // Phase 4: constant difficulty. Phase 6 will interpolate by round.
+  return {
+    timeLimitMs: INITIAL_TIME_LIMIT_MS,
+    negationProb: INITIAL_NEGATION_PROB,
+    compoundProb: INITIAL_COMPOUND_PROB,
+  };
 }

@@ -6,6 +6,36 @@ export const VIRTUAL_HEIGHT = 500;
 // Palette (HUD/background) — character & flag colors live alongside their renderer in Phase 2.
 export const BG_COLOR = '#0f172a';
 export const LETTERBOX_COLOR = '#000';
+export const TEXT_COLOR = '#e2e8f0';
+export const SUBTITLE_COLOR = '#38bdf8';
+export const SUBTITLE_PANEL_BG = '#0f172a';
+export const SUBTITLE_PANEL_BORDER = '#38bdf8';
+
+// Subtitle panel (Phase 4) — also serves as the command display in Phase 5.
+export const SUBTITLE_PANEL_X = 100;
+export const SUBTITLE_PANEL_Y = 60;
+export const SUBTITLE_PANEL_W = 600;
+export const SUBTITLE_PANEL_H = 70;
+export const SUBTITLE_FONT_SIZE = 30;
+
+// Initial game tuning (Phase 4 needs values; Phase 6 will animate them).
+export const INITIAL_TIME_LIMIT_MS = 1500;
+export const INITIAL_NEGATION_PROB = 0.0;
+export const INITIAL_COMPOUND_PROB = 0.0;
+
+// TTS
+export const TTS_LANG = 'ko-KR';
+export const TTS_RATE = 1.05;
+export const TTS_PITCH = 1.1;
+// Hints used to prefer a female ko-KR voice when multiple are installed.
+export const TTS_FEMALE_HINTS = ['female', 'yuna', 'sora', 'heami', 'sun-hi', '여성'];
+// Estimated ms per character when no Speech Synthesis voice is available.
+export const TTS_FALLBACK_MS_PER_CHAR = 110;
+export const TTS_FALLBACK_MIN_MS = 800;
+
+// Start screen (Phase 4)
+export const START_PROMPT = '아무 키나 눌러 시작';
+export const START_PROMPT_SIZE = 32;
 
 // Character colors
 export const SKIN_COLOR = '#facc15';
