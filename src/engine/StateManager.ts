@@ -32,6 +32,8 @@ export interface StateManagerDeps {
   generator: CommandGenerator;
   voice: VoiceManager;
   difficulty: (roundIndex: number) => DifficultyParams;
+  /** Notified once per round, immediately after judgment. */
+  onOutcome?: (outcome: Outcome) => void;
 }
 
 const INITIAL_FLAGS: FlagsState = { blue: 'DOWN', white: 'DOWN' };
@@ -142,6 +144,7 @@ export class StateManager {
       this.state.combo = 0;
       this.state.lives -= 1;
     }
+    this.deps.onOutcome?.(this.state.outcome);
   }
 
   /** Wait until the predicate becomes true; ticks come from tick(). */

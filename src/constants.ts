@@ -20,10 +20,15 @@ export const SUBTITLE_PANEL_W = 600;
 export const SUBTITLE_PANEL_H = 70;
 export const SUBTITLE_FONT_SIZE = 30;
 
-// Initial game tuning (Phase 4 needs values; Phase 6 will animate them).
+// Difficulty curve — linearly interpolated from INITIAL_* to FINAL_* across
+// ROUNDS_TO_MAX rounds. Above ROUNDS_TO_MAX the params clamp to FINAL_*.
 export const INITIAL_TIME_LIMIT_MS = 1500;
+export const FINAL_TIME_LIMIT_MS = 700;
 export const INITIAL_NEGATION_PROB = 0.0;
+export const FINAL_NEGATION_PROB = 0.4;
 export const INITIAL_COMPOUND_PROB = 0.0;
+export const FINAL_COMPOUND_PROB = 0.6;
+export const ROUNDS_TO_MAX = 15;
 
 // TTS
 export const TTS_LANG = 'ko-KR';
@@ -76,6 +81,21 @@ export const OUTCOME_FAIL_TEXT = '실패!';
 export const OUTCOME_FONT_SIZE = 60;
 export const OUTCOME_SUCCESS_COLOR = '#10b981';
 export const OUTCOME_FAIL_COLOR = '#ef4444';
+
+// Phase 6 — particles (success feedback)
+export const PARTICLE_COUNT = 32;
+export const PARTICLE_SPEED_MIN = 120;
+export const PARTICLE_SPEED_MAX = 320;
+export const PARTICLE_GRAVITY = 600;
+export const PARTICLE_LIFE_MS = 700;
+export const PARTICLE_RADIUS = 4;
+export const PARTICLE_COLORS = ['#10b981', '#34d399', '#a7f3d0', '#fde68a'];
+export const PARTICLE_BURST_X = 400;
+export const PARTICLE_BURST_Y = 280;
+
+// Phase 6 — screen shake (fail feedback)
+export const SHAKE_DURATION_MS = 240;
+export const SHAKE_INTENSITY = 9;
 
 // Game over (Phase 5)
 export const GAMEOVER_TITLE = 'GAME OVER';

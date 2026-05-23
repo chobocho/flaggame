@@ -5,23 +5,20 @@ import {
   type ViewportTransform,
 } from '../util/canvas';
 import { Renderer } from '../render/Renderer';
+import { EffectsManager } from '../render/effects';
 import { StateManager } from './StateManager';
 import { CommandGenerator } from '../command/CommandGenerator';
 import { VoiceManager } from '../audio/VoiceManager';
 import { InputManager } from '../input/InputManager';
 import { mulberry32 } from '../util/rng';
-import {
-  INITIAL_TIME_LIMIT_MS,
-  INITIAL_NEGATION_PROB,
-  INITIAL_COMPOUND_PROB,
-} from '../constants';
-import type { DifficultyParams } from '../types';
+import { difficultyForRound } from './difficulty';
 
 export class GameEngine {
   private readonly ctx: CanvasRenderingContext2D;
   private readonly renderer: Renderer;
   private readonly stateManager: StateManager;
   private readonly input: InputManager;
+  private readonly effects: EffectsManager;
   private viewport: ViewportTransform;
   private lastTime = 0;
   private running = false;
@@ -32,7 +29,8 @@ export class GameEngine {
     const ctx = canvas.getContext('2d');
     if (!ctx) throw new Error('2D canvas context unavailable');
     this.ctx = ctx;
-    this.renderer = new Renderer(ctx);
+    this.effects = new EffectsManager();
+    this.renderer = new Renderer(ctx, this.effects);
     this.viewport = fitCanvas(canvas);
     this.disposeResize = observeResize(canvas, () => {
       this.viewport = fitCanvas(canvas);
@@ -42,7 +40,11 @@ export class GameEngine {
     this.stateManager = new StateManager({
       generator: new CommandGenerator(mulberry32(seed)),
       voice: new VoiceManager(),
-      difficulty: defaultDifficulty,
+      difficulty: difficultyForRound,
+      onOutcome: outcome => {
+        if (outcome === 'SUCCESS') this.effects.successBurst();
+        else this.effects.failShake();
+      },
     });
 
     this.input = new InputManager({
@@ -64,6 +66,7 @@ export class GameEngine {
       const dt = Math.min(0.1, (now - this.lastTime) / 1000);
       this.lastTime = now;
       this.stateManager.tick(dt);
+      this.effects.tick(dt);
       this.render();
       this.rafId = requestAnimationFrame(loop);
     };
@@ -82,13 +85,4 @@ export class GameEngine {
     applyViewport(this.ctx, this.viewport);
     this.renderer.draw(this.stateManager.state);
   }
-}
-
-function defaultDifficulty(_roundIndex: number): DifficultyParams {
-  // Phase 5: still constant. Phase 6 will interpolate by round.
-  return {
-    timeLimitMs: INITIAL_TIME_LIMIT_MS,
-    negationProb: INITIAL_NEGATION_PROB,
-    compoundProb: INITIAL_COMPOUND_PROB,
-  };
 }
