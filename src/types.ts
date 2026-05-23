@@ -25,4 +25,6 @@ export interface DifficultyParams {
   compoundProb: number;
   /** Milliseconds the player has to settle on the target state after speech ends. */
   timeLimitMs: number;
+  /** SpeechSynthesisUtterance.rate — scales with round to accelerate command speech. */
+  ttsRate: number;
 }

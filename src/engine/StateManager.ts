@@ -26,6 +26,10 @@ export interface GameState {
   lives: number;
   roundIndex: number;
   combo: number;
+  /** True while the player has paused; tick(), timer, and TTS all freeze. */
+  paused: boolean;
+  /** True while the help overlay is shown; does not stop the game loop. */
+  helpOpen: boolean;
 }
 
 export interface StateManagerDeps {
@@ -61,6 +65,8 @@ export class StateManager {
       lives: INITIAL_LIVES,
       roundIndex: 0,
       combo: 0,
+      paused: false,
+      helpOpen: false,
     };
   }
 
@@ -80,10 +86,33 @@ export class StateManager {
     this.startRound();
   }
 
-  /** Player flag input — only accepted while the WAITING timer is running. */
+  /** Player flag input — accepted during SPEAKING and WAITING so the player can
+   *  pre-position while the command is still being read. */
   setFlag(side: FlagSide, pos: FlagPos): void {
-    if (this.state.phase !== 'WAITING') return;
+    if (this.state.paused) return;
+    if (this.state.phase !== 'WAITING' && this.state.phase !== 'SPEAKING') return;
     this.state.flags = { ...this.state.flags, [side]: pos };
+  }
+
+  /** Toggle pause. Freezes the loop, the WAITING timer, and TTS playback. */
+  togglePause(): void {
+    if (this.state.phase === 'IDLE' || this.state.phase === 'GAME_OVER') return;
+    this.setPaused(!this.state.paused);
+  }
+
+  setPaused(paused: boolean): void {
+    if (this.state.paused === paused) return;
+    this.state.paused = paused;
+    if (paused) this.deps.voice.pause();
+    else this.deps.voice.resume();
+  }
+
+  toggleHelp(): void {
+    this.state.helpOpen = !this.state.helpOpen;
+  }
+
+  closeHelp(): void {
+    this.state.helpOpen = false;
   }
 
   stop(): void {
@@ -93,6 +122,7 @@ export class StateManager {
 
   /** Per-frame tick: drive the WAITING and JUDGING timers. */
   tick(dt: number): void {
+    if (this.state.paused) return;
     const ms = dt * 1000;
     if (this.state.phase === 'WAITING') {
       this.state.timerMs = Math.max(0, this.state.timerMs - ms);
@@ -109,7 +139,7 @@ export class StateManager {
       this.state.outcome = null;
 
       this.state.phase = 'SPEAKING';
-      await this.deps.voice.speak(cmd.text);
+      await this.deps.voice.speak(cmd.text, params.ttsRate);
       if (this.loopAbort) return;
 
       this.state.phase = 'WAITING';

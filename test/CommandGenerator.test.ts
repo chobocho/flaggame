@@ -87,7 +87,7 @@ describe('CommandGenerator.next', () => {
   it('is deterministic given the same seed', () => {
     const a = new CommandGenerator(mulberry32(42));
     const b = new CommandGenerator(mulberry32(42));
-    const params = { negationProb: 0.4, compoundProb: 0.6, timeLimitMs: 1000 };
+    const params = { negationProb: 0.4, compoundProb: 0.6, timeLimitMs: 1000, ttsRate: 1.0 };
     for (let i = 0; i < 20; i++) {
       const ra = a.next(allDown, params);
       const rb = b.next(allDown, params);
@@ -97,7 +97,7 @@ describe('CommandGenerator.next', () => {
 
   it('never produces a compound command with two clauses on the same flag', () => {
     const gen = new CommandGenerator(mulberry32(7));
-    const params = { negationProb: 0.3, compoundProb: 1.0, timeLimitMs: 1000 };
+    const params = { negationProb: 0.3, compoundProb: 1.0, timeLimitMs: 1000, ttsRate: 1.0 };
     for (let i = 0; i < 100; i++) {
       const cmd = gen.next(allDown, params);
       // Compound text always contains exactly one of each color.
@@ -108,7 +108,7 @@ describe('CommandGenerator.next', () => {
 
   it('with negationProb=1 and compoundProb=0 always preserves state', () => {
     const gen = new CommandGenerator(mulberry32(99));
-    const params = { negationProb: 1.0, compoundProb: 0.0, timeLimitMs: 1000 };
+    const params = { negationProb: 1.0, compoundProb: 0.0, timeLimitMs: 1000, ttsRate: 1.0 };
     for (let i = 0; i < 50; i++) {
       const cmd = gen.next(mixed, params);
       expect(cmd.target).toEqual(mixed);

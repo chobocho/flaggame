@@ -1,4 +1,11 @@
-import { TTS_LANG, TTS_RATE, TTS_PITCH, TTS_FEMALE_HINTS, TTS_FALLBACK_MS_PER_CHAR, TTS_FALLBACK_MIN_MS } from '../constants';
+import {
+  TTS_LANG,
+  TTS_RATE,
+  TTS_PITCH,
+  TTS_FEMALE_HINTS,
+  TTS_FALLBACK_MS_PER_CHAR,
+  TTS_FALLBACK_MIN_MS,
+} from '../constants';
 
 /**
  * Wraps window.speechSynthesis. Picks a Korean (ko-KR) voice, preferring
@@ -37,15 +44,15 @@ export class VoiceManager {
     this.voice = female ?? korean[0] ?? null;
   }
 
-  /** Speak text and resolve once playback ends (or fallback timer elapses). */
-  speak(text: string): Promise<void> {
+  /** Speak text at an optional rate (defaults to TTS_RATE); resolves once playback ends. */
+  speak(text: string, rate: number = TTS_RATE): Promise<void> {
     if (!this.synth) {
-      return this.fallback(text);
+      return this.fallback(text, rate);
     }
     return new Promise<void>(resolve => {
       const utter = new SpeechSynthesisUtterance(text);
       utter.lang = TTS_LANG;
-      utter.rate = TTS_RATE;
+      utter.rate = rate;
       utter.pitch = TTS_PITCH;
       if (this.voice) utter.voice = this.voice;
       let done = false;
@@ -60,8 +67,7 @@ export class VoiceManager {
         this.synth!.cancel();
         this.synth!.speak(utter);
       } catch {
-        // Fall back if speak() throws (rare, e.g. iOS background tabs).
-        this.fallback(text).then(finish);
+        this.fallback(text, rate).then(finish);
       }
     });
   }
@@ -70,8 +76,17 @@ export class VoiceManager {
     this.synth?.cancel();
   }
 
-  private fallback(text: string): Promise<void> {
-    const ms = Math.max(TTS_FALLBACK_MIN_MS, text.length * TTS_FALLBACK_MS_PER_CHAR);
+  pause(): void {
+    this.synth?.pause();
+  }
+
+  resume(): void {
+    this.synth?.resume();
+  }
+
+  private fallback(text: string, rate: number): Promise<void> {
+    const perChar = TTS_FALLBACK_MS_PER_CHAR / Math.max(0.1, rate);
+    const ms = Math.max(TTS_FALLBACK_MIN_MS / Math.max(0.1, rate), text.length * perChar);
     return new Promise(r => setTimeout(r, ms));
   }
 }

@@ -10,6 +10,7 @@ import { StateManager } from './StateManager';
 import { CommandGenerator } from '../command/CommandGenerator';
 import { VoiceManager } from '../audio/VoiceManager';
 import { InputManager } from '../input/InputManager';
+import { PointerManager } from '../input/PointerManager';
 import { mulberry32 } from '../util/rng';
 import { difficultyForRound } from './difficulty';
 
@@ -18,9 +19,11 @@ export class GameEngine {
   private readonly renderer: Renderer;
   private readonly stateManager: StateManager;
   private readonly input: InputManager;
+  private readonly pointer: PointerManager;
   private readonly effects: EffectsManager;
   private viewport: ViewportTransform;
   private lastTime = 0;
+  private elapsed = 0;
   private running = false;
   private rafId = 0;
   private disposeResize: () => void;
@@ -48,13 +51,43 @@ export class GameEngine {
     });
 
     this.input = new InputManager({
-      onAnyKey: code => {
-        const sm = this.stateManager;
-        if (sm.state.phase === 'IDLE') sm.startRound();
-        else if (sm.state.phase === 'GAME_OVER' && code === 'KeyR') sm.restart();
-      },
+      onAnyKey: code => this.handleStartKey(code),
       onFlagKey: (side, pos) => this.stateManager.setFlag(side, pos),
+      onHelpToggle: () => this.stateManager.toggleHelp(),
+      onPauseToggle: () => this.stateManager.togglePause(),
     });
+
+    this.pointer = new PointerManager(canvas, () => this.viewport, {
+      onTapBackground: () => this.handleBackgroundTap(),
+      onFlagButton: (side, pos) => this.stateManager.setFlag(side, pos),
+      onHelpToggle: () => this.stateManager.toggleHelp(),
+      onPauseToggle: () => this.stateManager.togglePause(),
+    });
+  }
+
+  private handleStartKey(code: string): void {
+    const sm = this.stateManager;
+    if (sm.state.helpOpen) {
+      sm.closeHelp();
+      return;
+    }
+    const isStartKey = code === 'Space' || code === 'Enter';
+    if (sm.state.phase === 'IDLE' && isStartKey) sm.startRound();
+    else if (sm.state.phase === 'GAME_OVER' && isStartKey) sm.restart();
+  }
+
+  private handleBackgroundTap(): void {
+    const sm = this.stateManager;
+    if (sm.state.helpOpen) {
+      sm.closeHelp();
+      return;
+    }
+    if (sm.state.paused) {
+      sm.togglePause();
+      return;
+    }
+    if (sm.state.phase === 'IDLE') sm.startRound();
+    else if (sm.state.phase === 'GAME_OVER') sm.restart();
   }
 
   start(): void {
@@ -66,7 +99,10 @@ export class GameEngine {
       const dt = Math.min(0.1, (now - this.lastTime) / 1000);
       this.lastTime = now;
       this.stateManager.tick(dt);
-      this.effects.tick(dt);
+      if (!this.stateManager.state.paused) {
+        this.effects.tick(dt);
+        this.elapsed += dt;
+      }
       this.render();
       this.rafId = requestAnimationFrame(loop);
     };
@@ -78,11 +114,12 @@ export class GameEngine {
     cancelAnimationFrame(this.rafId);
     this.disposeResize();
     this.input.dispose();
+    this.pointer.dispose();
     this.stateManager.stop();
   }
 
   private render(): void {
     applyViewport(this.ctx, this.viewport);
-    this.renderer.draw(this.stateManager.state, this.viewport);
+    this.renderer.draw(this.stateManager.state, this.viewport, this.elapsed);
   }
 }

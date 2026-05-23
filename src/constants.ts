@@ -20,6 +20,51 @@ export const SUBTITLE_PANEL_BORDER = '#38bdf8';
 // HUD edge padding (anchor-relative)
 export const HUD_EDGE_PAD = 24;
 
+// Top-right icon buttons (help / pause). Drawn in virtual-coord space.
+export const ICON_BTN_SIZE = 44;
+export const ICON_BTN_GAP = 12;
+export const ICON_BTN_TOP = 56;
+export const ICON_BTN_BG = 'rgba(15, 23, 42, 0.75)';
+export const ICON_BTN_BORDER = '#334155';
+export const ICON_BTN_BORDER_ACTIVE = '#38bdf8';
+export const ICON_BTN_FONT_SIZE = 24;
+
+// On-screen flag control buttons (mobile / touch). Always rendered, but
+// scaled with the virtual viewport so they sit comfortably on phones.
+export const FLAG_BTN_SIZE = 84;
+export const FLAG_BTN_RADIUS = 14;
+export const FLAG_BTN_GAP = 12;
+export const FLAG_BTN_BOTTOM_OFFSET = 110;
+export const FLAG_BTN_SIDE_OFFSET = 28;
+export const FLAG_BTN_LABEL_FONT_SIZE = 18;
+export const FLAG_BTN_KEY_FONT_SIZE = 14;
+export const FLAG_BTN_BLUE_BG = 'rgba(59, 130, 246, 0.85)';
+export const FLAG_BTN_BLUE_BG_ACTIVE = '#60a5fa';
+export const FLAG_BTN_WHITE_BG = 'rgba(248, 250, 252, 0.92)';
+export const FLAG_BTN_WHITE_BG_ACTIVE = '#ffffff';
+export const FLAG_BTN_LABEL_BLUE = '#f1f5f9';
+export const FLAG_BTN_LABEL_WHITE = '#0f172a';
+export const FLAG_BTN_BORDER = 'rgba(15, 23, 42, 0.4)';
+
+// Help overlay
+export const HELP_OVERLAY_BG = 'rgba(15, 23, 42, 0.92)';
+export const HELP_TITLE = '도움말';
+export const HELP_TITLE_SIZE = 32;
+export const HELP_LINE_SIZE = 20;
+export const HELP_LINE_GAP = 32;
+export const HELP_HINT = '아무 곳이나 누르거나 F1 키로 닫기';
+export const HELP_HINT_SIZE = 16;
+export const HELP_HINT_COLOR = '#64748b';
+
+// Pause overlay
+export const PAUSE_OVERLAY_BG = 'rgba(0, 0, 0, 0.55)';
+export const PAUSE_TITLE = '일시 정지';
+export const PAUSE_TITLE_SIZE = 44;
+export const PAUSE_TITLE_COLOR = '#fde68a';
+export const PAUSE_HINT = 'ESC 또는 ⏸ 버튼으로 이어하기';
+export const PAUSE_HINT_SIZE = 18;
+export const PAUSE_HINT_COLOR = '#cbd5e1';
+
 // Subtitle panel — width is clamped so it fits even on narrow screens
 export const SUBTITLE_PANEL_TOP = 72;
 export const SUBTITLE_PANEL_H = 64;
@@ -39,15 +84,36 @@ export const ROUNDS_TO_MAX = 15;
 // TTS
 export const TTS_LANG = 'ko-KR';
 export const TTS_RATE = 1.05;
+export const TTS_RATE_MIN = 1.0;
+export const TTS_RATE_MAX = 1.8;
 export const TTS_PITCH = 1.1;
 export const TTS_FEMALE_HINTS = ['female', 'yuna', 'sora', 'heami', 'sun-hi', '여성'];
 export const TTS_FALLBACK_MS_PER_CHAR = 110;
 export const TTS_FALLBACK_MIN_MS = 800;
+/** Fallback ms-per-char shrinks with rate so the dev-mode/CI fallback timing
+ *  also speeds up alongside live speech. */
+export const TTS_FALLBACK_RATE_DIVISOR = 1.0;
 
 // Start screen
-export const START_PROMPT = '아무 키나 눌러 시작';
-export const START_PROMPT_SIZE = 28;
+export const START_PROMPT = 'SPACE 키 또는 화면을 눌러 시작';
+export const START_PROMPT_SIZE = 26;
 export const START_PROMPT_BOTTOM_OFFSET = 48;
+
+// Start-screen keyboard guide
+export const START_GUIDE_TITLE = '조작 단축키';
+export const START_GUIDE_TITLE_SIZE = 22;
+export const START_GUIDE_LINE_SIZE = 18;
+export const START_GUIDE_LINE_GAP = 26;
+export const START_GUIDE_TOP_OFFSET_RATIO = 0.30;
+export const START_GUIDE_COLOR = '#94a3b8';
+export const START_GUIDE_KEY_COLOR = '#38bdf8';
+export const START_GUIDE_LINES: ReadonlyArray<readonly [string, string]> = [
+  ['Q / A', '청기 올림 / 내림'],
+  ['P / L', '백기 올림 / 내림'],
+  ['F1 / ❓', '도움말 열기'],
+  ['ESC / ⏸', '일시 정지'],
+  ['SPACE', '시작 / 재시작'],
+];
 
 // Gameplay tuning
 export const INITIAL_LIVES = 3;
@@ -104,7 +170,7 @@ export const PARTICLE_ORIGIN_DY = -30;
 export const GAMEOVER_TITLE = 'GAME OVER';
 export const GAMEOVER_TITLE_SIZE = 56;
 export const GAMEOVER_TITLE_COLOR = '#ef4444';
-export const GAMEOVER_HINT = 'R 키를 눌러 다시 시작';
+export const GAMEOVER_HINT = 'SPACE 키 또는 화면을 눌러 다시 시작';
 export const GAMEOVER_HINT_SIZE = 22;
 
 // Character geometry — coordinates are RELATIVE to the character origin.
@@ -116,8 +182,9 @@ export const BLUE_FLAG_COLOR = '#3b82f6';
 export const WHITE_FLAG_COLOR = '#f8fafc';
 export const FLAG_OUTLINE = '#1e293b';
 
-export const HEAD_DY = -70;
-export const HEAD_R = 36;
+export const HEAD_DY = -78;
+export const HEAD_RX = 38;
+export const HEAD_RY = 44;
 export const BODY_W = 60;
 export const BODY_H = 90;
 export const BODY_TOP_DY = -34;
@@ -127,8 +194,36 @@ export const ARM_LENGTH = 95;
 export const ARM_WIDTH = 12;
 export const POLE_LENGTH = 150;
 export const POLE_WIDTH = 5;
-export const FLAG_W = 70;
-export const FLAG_H = 48;
+export const FLAG_W = 78;
+export const FLAG_H = 52;
 
 export const ARM_ANGLE_UP_DEG = 62;
 export const ARM_ANGLE_DOWN_DEG = 28;
+
+// Anime-ish character extras
+export const HAIR_COLOR = '#7c3aed';
+export const HAIR_HIGHLIGHT = '#a78bfa';
+export const EYE_WHITE = '#ffffff';
+export const EYE_IRIS = '#1d4ed8';
+export const EYE_PUPIL = '#0f172a';
+export const EYE_HIGHLIGHT = '#f0f9ff';
+export const BROW_COLOR = '#4c1d95';
+export const BLUSH_COLOR = 'rgba(244, 114, 182, 0.55)';
+export const MOUTH_COLOR = '#be123c';
+export const COLLAR_COLOR = '#1e293b';
+export const TIE_COLOR = '#ef4444';
+
+// Idle animation (breath/bob)
+export const IDLE_BOB_AMPL = 3.5;
+export const IDLE_BOB_PERIOD_S = 1.8;
+export const BLINK_PERIOD_S = 4.0;
+export const BLINK_DURATION_S = 0.14;
+
+// Flag wave
+export const FLAG_WAVE_SEGMENTS = 8;
+export const FLAG_WAVE_AMPL = 4.5;
+export const FLAG_WAVE_FREQ = 2.6;
+export const FLAG_WAVE_SPEED = 5.4;
+export const FLAG_FOLD_LINES = 3;
+export const FLAG_FOLD_COLOR = 'rgba(15, 23, 42, 0.18)';
+export const FLAG_WHITE_SHADE = 'rgba(15, 23, 42, 0.08)';

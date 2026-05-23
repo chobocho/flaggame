@@ -45,8 +45,26 @@ export function observeResize(canvas: HTMLCanvasElement, onResize: () => void): 
   const ro = new ResizeObserver(onResize);
   ro.observe(canvas);
   window.addEventListener('orientationchange', onResize);
+  window.addEventListener('resize', onResize);
+  // Galaxy Fold's fold/unfold and software keyboards reshape visualViewport
+  // without firing the canvas ResizeObserver until the next layout — listen
+  // explicitly so the canvas re-fits the moment the hinge state changes.
+  const vv = typeof window !== 'undefined' ? window.visualViewport : null;
+  vv?.addEventListener('resize', onResize);
+  vv?.addEventListener('scroll', onResize);
+  // Cover/main display switches can also fire as devicePixelRatio changes;
+  // matchMedia watchers re-evaluate when DPR crosses an integer boundary.
+  const dprMql = typeof window !== 'undefined' && typeof window.matchMedia === 'function'
+    ? window.matchMedia(`(resolution: ${window.devicePixelRatio}dppx)`)
+    : null;
+  const onDprChange = () => onResize();
+  dprMql?.addEventListener?.('change', onDprChange);
   return () => {
     ro.disconnect();
     window.removeEventListener('orientationchange', onResize);
+    window.removeEventListener('resize', onResize);
+    vv?.removeEventListener('resize', onResize);
+    vv?.removeEventListener('scroll', onResize);
+    dprMql?.removeEventListener?.('change', onDprChange);
   };
 }

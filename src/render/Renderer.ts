@@ -11,7 +11,7 @@ export class Renderer {
     private readonly effects: EffectsManager,
   ) {}
 
-  draw(state: GameState, vp: ViewportTransform): void {
+  draw(state: GameState, vp: ViewportTransform, time: number): void {
     const ctx = this.ctx;
     const vw = vp.virtualWidth;
     const vh = vp.virtualHeight;
@@ -19,14 +19,13 @@ export class Renderer {
     ctx.fillStyle = BG_COLOR;
     ctx.fillRect(0, 0, vw, vh);
 
-    // Character sits slightly below vertical center so the HUD has room on top.
     const originX = vw / 2;
     const originY = vh * 0.62;
 
     const shake = this.effects.shakeOffset();
     ctx.save();
     ctx.translate(shake.x, shake.y);
-    drawCharacter(ctx, state.flags, originX, originY);
+    drawCharacter(ctx, state, originX, originY, time);
     this.effects.drawParticles(ctx, originX, originY);
     ctx.restore();
 
