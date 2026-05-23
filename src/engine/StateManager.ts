@@ -40,7 +40,10 @@ export interface StateManagerDeps {
   onOutcome?: (outcome: Outcome) => void;
 }
 
-const INITIAL_FLAGS: FlagsState = { blue: 'DOWN', white: 'DOWN' };
+/** Resting position between rounds — arms held out horizontally, neither
+ *  raised nor lowered. Commands only ever ask for UP or DOWN, so MIDDLE
+ *  acts as the neutral baseline the player moves away from. */
+const INITIAL_FLAGS: FlagsState = { blue: 'MIDDLE', white: 'MIDDLE' };
 
 export class StateManager {
   readonly state: GameState;

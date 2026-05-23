@@ -199,6 +199,8 @@ export const FLAG_H = 52;
 
 export const ARM_ANGLE_UP_DEG = 62;
 export const ARM_ANGLE_DOWN_DEG = 28;
+// Resting (MIDDLE) — arm held horizontally out to the side.
+export const ARM_ANGLE_MIDDLE_DEG = 4;
 
 // Anime-ish character extras
 export const HAIR_COLOR = '#7c3aed';

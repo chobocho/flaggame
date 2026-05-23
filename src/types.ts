@@ -1,4 +1,4 @@
-export type FlagPos = 'UP' | 'DOWN';
+export type FlagPos = 'UP' | 'MIDDLE' | 'DOWN';
 export type FlagSide = 'blue' | 'white';
 
 export interface FlagsState {

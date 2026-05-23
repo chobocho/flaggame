@@ -18,6 +18,7 @@ import {
   POLE_WIDTH,
   ARM_ANGLE_UP_DEG,
   ARM_ANGLE_DOWN_DEG,
+  ARM_ANGLE_MIDDLE_DEG,
   HAIR_COLOR,
   HAIR_HIGHLIGHT,
   EYE_WHITE,
@@ -50,7 +51,11 @@ function moodFor(state: GameState): Mood {
 
 function armAngleRad(pos: FlagPos, side: FlagSide): number {
   const outward = side === 'blue' ? -1 : 1;
-  const deg = pos === 'UP' ? -ARM_ANGLE_UP_DEG : ARM_ANGLE_DOWN_DEG;
+  const deg = pos === 'UP'
+    ? -ARM_ANGLE_UP_DEG
+    : pos === 'DOWN'
+      ? ARM_ANGLE_DOWN_DEG
+      : ARM_ANGLE_MIDDLE_DEG;
   const baseDeg = outward === -1 ? 180 - deg : deg;
   return baseDeg * DEG_TO_RAD;
 }

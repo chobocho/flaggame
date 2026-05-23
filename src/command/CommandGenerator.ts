@@ -6,9 +6,13 @@ import type {
   FlagsState,
 } from '../types';
 
+/** Commands only ever ask the player to raise (UP) or lower (DOWN); MIDDLE
+ *  is the rest position the round starts in but is never spoken aloud. */
+type ActionPos = Exclude<FlagPos, 'MIDDLE'>;
+
 interface Clause {
   side: FlagSide;
-  pos: FlagPos;
+  pos: ActionPos;
   negated: boolean;
 }
 
@@ -22,7 +26,7 @@ const COLOR_TEXT: Record<FlagSide, string> = {
 // `termN` → terminal negative                        ("올리지 마")
 // `conj`  → conjunctive form ("올리고", "내리고")       — non-final clause, positive
 // `conjN` → conjunctive negative                     ("올리지 말고")
-const ACTION_FORMS: Record<FlagPos, { term: string; termN: string; conj: string; conjN: string }> = {
+const ACTION_FORMS: Record<ActionPos, { term: string; termN: string; conj: string; conjN: string }> = {
   UP:   { term: '올려', termN: '올리지 마', conj: '올리고', conjN: '올리지 말고' },
   DOWN: { term: '내려', termN: '내리지 마', conj: '내리고', conjN: '내리지 말고' },
 };

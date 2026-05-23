@@ -6,6 +6,7 @@ import type { FlagsState } from '../src/types';
 const allDown: FlagsState = { blue: 'DOWN', white: 'DOWN' };
 const allUp: FlagsState = { blue: 'UP', white: 'UP' };
 const mixed: FlagsState = { blue: 'UP', white: 'DOWN' };
+const allMiddle: FlagsState = { blue: 'MIDDLE', white: 'MIDDLE' };
 
 describe('buildCommand — single positive', () => {
   it('"청기 올려" sets blue UP, leaves white untouched', () => {
@@ -113,6 +114,27 @@ describe('CommandGenerator.next', () => {
       const cmd = gen.next(mixed, params);
       expect(cmd.target).toEqual(mixed);
       expect(cmd.text).toMatch(/지 마$/);
+    }
+  });
+
+  it('preserves MIDDLE rest state for negated commands', () => {
+    const gen = new CommandGenerator(mulberry32(33));
+    const params = { negationProb: 1.0, compoundProb: 0.0, timeLimitMs: 1000, ttsRate: 1.0 };
+    for (let i = 0; i < 30; i++) {
+      const cmd = gen.next(allMiddle, params);
+      expect(cmd.target).toEqual(allMiddle);
+    }
+  });
+
+  it('only ever asks for UP or DOWN, never MIDDLE', () => {
+    const gen = new CommandGenerator(mulberry32(77));
+    const params = { negationProb: 0.3, compoundProb: 0.5, timeLimitMs: 1000, ttsRate: 1.0 };
+    for (let i = 0; i < 50; i++) {
+      const cmd = gen.next(allMiddle, params);
+      // No MIDDLE in target for positive clauses; negated ones leave state at MIDDLE.
+      expect(['UP', 'DOWN', 'MIDDLE']).toContain(cmd.target.blue);
+      expect(['UP', 'DOWN', 'MIDDLE']).toContain(cmd.target.white);
+      expect(cmd.text).not.toContain('가운데');
     }
   });
 });
