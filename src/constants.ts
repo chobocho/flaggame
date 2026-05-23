@@ -72,9 +72,10 @@ export const SUBTITLE_PANEL_MAX_W = 560;
 export const SUBTITLE_PANEL_MIN_SIDE_PAD = 32;
 export const SUBTITLE_FONT_SIZE = 24;
 
-// Difficulty curve
-export const INITIAL_TIME_LIMIT_MS = 1500;
-export const FINAL_TIME_LIMIT_MS = 700;
+// Difficulty curve — timer now runs concurrently with TTS, so the budget
+// has to cover both the speech and the player's reaction window.
+export const INITIAL_TIME_LIMIT_MS = 3200;
+export const FINAL_TIME_LIMIT_MS = 1600;
 export const INITIAL_NEGATION_PROB = 0.0;
 export const FINAL_NEGATION_PROB = 0.4;
 export const INITIAL_COMPOUND_PROB = 0.0;

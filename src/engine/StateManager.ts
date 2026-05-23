@@ -10,7 +10,7 @@ import { CommandGenerator } from '../command/CommandGenerator';
 import { VoiceManager } from '../audio/VoiceManager';
 import { INITIAL_LIVES, JUDGE_HOLD_MS, SCORE_PER_ROUND, SCORE_PER_COMBO } from '../constants';
 
-export type Phase = 'IDLE' | 'SPEAKING' | 'WAITING' | 'JUDGING' | 'GAME_OVER';
+export type Phase = 'IDLE' | 'WAITING' | 'JUDGING' | 'GAME_OVER';
 
 export interface GameState {
   phase: Phase;
@@ -89,11 +89,13 @@ export class StateManager {
     this.startRound();
   }
 
-  /** Player flag input — accepted during SPEAKING and WAITING so the player can
-   *  pre-position while the command is still being read. */
+  /** Player flag input — only accepted while the WAITING timer is running.
+   *  Since the timer starts at the same instant TTS playback begins, this
+   *  also covers the speech phase: there is no longer a separate SPEAKING
+   *  window where input would be silently dropped. */
   setFlag(side: FlagSide, pos: FlagPos): void {
     if (this.state.paused) return;
-    if (this.state.phase !== 'WAITING' && this.state.phase !== 'SPEAKING') return;
+    if (this.state.phase !== 'WAITING') return;
     this.state.flags = { ...this.state.flags, [side]: pos };
   }
 
@@ -145,16 +147,18 @@ export class StateManager {
       this.state.command = cmd;
       this.state.outcome = null;
 
-      this.state.phase = 'SPEAKING';
-      await this.deps.voice.speak(cmd.text, params.ttsRate);
-      if (this.loopAbort) return;
-
+      // Timer runs concurrently with TTS playback — the round window starts
+      // the moment the command begins speaking, not after it finishes.
       this.state.phase = 'WAITING';
       this.state.timerMs = params.timeLimitMs;
       this.state.timerTotalMs = params.timeLimitMs;
+      void this.deps.voice.speak(cmd.text, params.ttsRate);
       await this.waitFor(() => this.state.timerMs <= 0);
       if (this.loopAbort) return;
 
+      // Cut off any tail of the TTS so the outcome banner isn't undercut
+      // by lingering speech from the round we just judged.
+      this.deps.voice.cancel();
       this.judge(cmd.target);
 
       this.state.phase = 'JUDGING';
