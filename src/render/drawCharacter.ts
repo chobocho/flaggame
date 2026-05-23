@@ -6,14 +6,13 @@ import {
   BLUE_FLAG_COLOR,
   WHITE_FLAG_COLOR,
   FLAG_OUTLINE,
-  CHAR_HEAD_X,
-  CHAR_HEAD_Y,
-  CHAR_HEAD_R,
-  CHAR_BODY_W,
-  CHAR_BODY_H,
-  CHAR_BODY_TOP,
+  HEAD_DY,
+  HEAD_R,
+  BODY_W,
+  BODY_H,
+  BODY_TOP_DY,
   SHOULDER_DX,
-  SHOULDER_Y,
+  SHOULDER_DY,
   ARM_LENGTH,
   ARM_WIDTH,
   POLE_LENGTH,
@@ -27,11 +26,8 @@ import {
 const DEG_TO_RAD = Math.PI / 180;
 
 function armAngleRad(pos: FlagPos, side: FlagSide): number {
-  // Outward = -X for blue (left), +X for white (right).
-  // UP raises the arm above horizontal (negative Y); DOWN lowers it (positive Y).
   const outward = side === 'blue' ? -1 : 1;
   const deg = pos === 'UP' ? -ARM_ANGLE_UP_DEG : ARM_ANGLE_DOWN_DEG;
-  // angle from +X axis toward the hand
   const baseDeg = outward === -1 ? 180 - deg : deg;
   return baseDeg * DEG_TO_RAD;
 }
@@ -39,23 +35,22 @@ function armAngleRad(pos: FlagPos, side: FlagSide): number {
 function drawArmAndFlag(
   ctx: CanvasRenderingContext2D,
   shoulderX: number,
+  shoulderY: number,
   pos: FlagPos,
   side: FlagSide,
 ): void {
   const angle = armAngleRad(pos, side);
   const handX = shoulderX + Math.cos(angle) * ARM_LENGTH;
-  const handY = SHOULDER_Y + Math.sin(angle) * ARM_LENGTH;
+  const handY = shoulderY + Math.sin(angle) * ARM_LENGTH;
 
-  // Arm
   ctx.strokeStyle = SKIN_COLOR;
   ctx.lineWidth = ARM_WIDTH;
   ctx.lineCap = 'round';
   ctx.beginPath();
-  ctx.moveTo(shoulderX, SHOULDER_Y);
+  ctx.moveTo(shoulderX, shoulderY);
   ctx.lineTo(handX, handY);
   ctx.stroke();
 
-  // Pole extends straight up from the hand.
   const poleTopY = handY - POLE_LENGTH;
   ctx.strokeStyle = POLE_COLOR;
   ctx.lineWidth = POLE_WIDTH;
@@ -65,7 +60,6 @@ function drawArmAndFlag(
   ctx.lineTo(handX, poleTopY);
   ctx.stroke();
 
-  // Flag attaches to the pole on the outward side so blue/white never overlap the body.
   const outward = side === 'blue' ? -1 : 1;
   const flagX = outward === -1 ? handX - FLAG_W : handX;
   const flagY = poleTopY;
@@ -76,18 +70,21 @@ function drawArmAndFlag(
   ctx.strokeRect(flagX, flagY, FLAG_W, FLAG_H);
 }
 
-export function drawCharacter(ctx: CanvasRenderingContext2D, flags: FlagsState): void {
-  // Body (drawn first so arms overlay it)
+/** Draw the character centered on (originX, originY). */
+export function drawCharacter(
+  ctx: CanvasRenderingContext2D,
+  flags: FlagsState,
+  originX: number,
+  originY: number,
+): void {
   ctx.fillStyle = BODY_COLOR;
-  ctx.fillRect(CHAR_HEAD_X - CHAR_BODY_W / 2, CHAR_BODY_TOP, CHAR_BODY_W, CHAR_BODY_H);
+  ctx.fillRect(originX - BODY_W / 2, originY + BODY_TOP_DY, BODY_W, BODY_H);
 
-  // Head
   ctx.fillStyle = SKIN_COLOR;
   ctx.beginPath();
-  ctx.arc(CHAR_HEAD_X, CHAR_HEAD_Y, CHAR_HEAD_R, 0, Math.PI * 2);
+  ctx.arc(originX, originY + HEAD_DY, HEAD_R, 0, Math.PI * 2);
   ctx.fill();
 
-  // Arms + flags (blue = left, white = right — always)
-  drawArmAndFlag(ctx, CHAR_HEAD_X - SHOULDER_DX, flags.blue, 'blue');
-  drawArmAndFlag(ctx, CHAR_HEAD_X + SHOULDER_DX, flags.white, 'white');
+  drawArmAndFlag(ctx, originX - SHOULDER_DX, originY + SHOULDER_DY, flags.blue, 'blue');
+  drawArmAndFlag(ctx, originX + SHOULDER_DX, originY + SHOULDER_DY, flags.white, 'white');
 }

@@ -1,22 +1,20 @@
-import { VIRTUAL_WIDTH, VIRTUAL_HEIGHT, LETTERBOX_COLOR } from '../constants';
+import { BASE_WIDTH, BASE_HEIGHT, LETTERBOX_COLOR } from '../constants';
 
 export interface ViewportTransform {
   scale: number;
-  offsetX: number;
-  offsetY: number;
-  cssWidth: number;
-  cssHeight: number;
+  /** Virtual width in logical units; stretches with the screen aspect. */
+  virtualWidth: number;
+  /** Virtual height in logical units; stretches with the screen aspect. */
+  virtualHeight: number;
 }
 
 /**
  * Resize the canvas backing store to match its CSS size × devicePixelRatio,
- * then compute a letterbox transform from VIRTUAL_WIDTH × VIRTUAL_HEIGHT to the
- * actual pixel size. The transform is applied before each frame is drawn so
- * the game can use virtual coordinates everywhere.
- *
- * This is the single mechanism that keeps the game playable on both Galaxy
- * Fold 7 cover (tall portrait) and main (near-square) screens — no media
- * queries, just ratio-preserving fit.
+ * then compute a virtual coordinate system that always contains a minimum
+ * BASE_WIDTH × BASE_HEIGHT playable area and stretches to match the actual
+ * screen aspect on the larger axis. Content positions itself relative to
+ * the virtual viewport, so portrait (Galaxy Fold cover) and near-square
+ * (Fold main) layouts are both fully used without large letterbox bars.
  */
 export function fitCanvas(canvas: HTMLCanvasElement): ViewportTransform {
   const dpr = window.devicePixelRatio || 1;
@@ -28,11 +26,11 @@ export function fitCanvas(canvas: HTMLCanvasElement): ViewportTransform {
   if (canvas.width !== pxWidth) canvas.width = pxWidth;
   if (canvas.height !== pxHeight) canvas.height = pxHeight;
 
-  const scale = Math.min(pxWidth / VIRTUAL_WIDTH, pxHeight / VIRTUAL_HEIGHT);
-  const offsetX = Math.floor((pxWidth - VIRTUAL_WIDTH * scale) / 2);
-  const offsetY = Math.floor((pxHeight - VIRTUAL_HEIGHT * scale) / 2);
+  const scale = Math.min(pxWidth / BASE_WIDTH, pxHeight / BASE_HEIGHT);
+  const virtualWidth = pxWidth / scale;
+  const virtualHeight = pxHeight / scale;
 
-  return { scale, offsetX, offsetY, cssWidth, cssHeight };
+  return { scale, virtualWidth, virtualHeight };
 }
 
 export function applyViewport(ctx: CanvasRenderingContext2D, vp: ViewportTransform): void {
@@ -40,10 +38,9 @@ export function applyViewport(ctx: CanvasRenderingContext2D, vp: ViewportTransfo
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.fillStyle = LETTERBOX_COLOR;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
-  ctx.setTransform(vp.scale, 0, 0, vp.scale, vp.offsetX, vp.offsetY);
+  ctx.setTransform(vp.scale, 0, 0, vp.scale, 0, 0);
 }
 
-/** Observe size changes (resize, orientation, fold/unfold) and invoke onResize. */
 export function observeResize(canvas: HTMLCanvasElement, onResize: () => void): () => void {
   const ro = new ResizeObserver(onResize);
   ro.observe(canvas);

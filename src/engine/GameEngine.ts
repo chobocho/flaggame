@@ -83,6 +83,6 @@ export class GameEngine {
 
   private render(): void {
     applyViewport(this.ctx, this.viewport);
-    this.renderer.draw(this.stateManager.state);
+    this.renderer.draw(this.stateManager.state, this.viewport);
   }
 }

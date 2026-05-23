@@ -1,8 +1,9 @@
-import { VIRTUAL_WIDTH, VIRTUAL_HEIGHT, BG_COLOR } from '../constants';
+import { BG_COLOR } from '../constants';
 import { drawCharacter } from './drawCharacter';
 import { drawHUD } from './drawHUD';
 import type { GameState } from '../engine/StateManager';
 import type { EffectsManager } from './effects';
+import type { ViewportTransform } from '../util/canvas';
 
 export class Renderer {
   constructor(
@@ -10,19 +11,25 @@ export class Renderer {
     private readonly effects: EffectsManager,
   ) {}
 
-  draw(state: GameState): void {
+  draw(state: GameState, vp: ViewportTransform): void {
     const ctx = this.ctx;
-    ctx.fillStyle = BG_COLOR;
-    ctx.fillRect(0, 0, VIRTUAL_WIDTH, VIRTUAL_HEIGHT);
+    const vw = vp.virtualWidth;
+    const vh = vp.virtualHeight;
 
-    // Screen-shake displaces the scene but not the HUD overlays, so save/restore.
+    ctx.fillStyle = BG_COLOR;
+    ctx.fillRect(0, 0, vw, vh);
+
+    // Character sits slightly below vertical center so the HUD has room on top.
+    const originX = vw / 2;
+    const originY = vh * 0.62;
+
     const shake = this.effects.shakeOffset();
     ctx.save();
     ctx.translate(shake.x, shake.y);
-    drawCharacter(ctx, state.flags);
-    this.effects.drawParticles(ctx);
+    drawCharacter(ctx, state.flags, originX, originY);
+    this.effects.drawParticles(ctx, originX, originY);
     ctx.restore();
 
-    drawHUD(ctx, state);
+    drawHUD(ctx, state, vw, vh);
   }
 }
