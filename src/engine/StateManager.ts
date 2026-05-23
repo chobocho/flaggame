@@ -38,6 +38,8 @@ export interface StateManagerDeps {
   difficulty: (roundIndex: number) => DifficultyParams;
   /** Notified once per round, immediately after judgment. */
   onOutcome?: (outcome: Outcome) => void;
+  /** Fired once when lives reach zero; receives the final score. */
+  onGameOver?: (finalScore: number) => void;
 }
 
 /** Resting position between rounds — arms held out horizontally, neither
@@ -168,6 +170,7 @@ export class StateManager {
 
       if (this.state.lives <= 0) {
         this.state.phase = 'GAME_OVER';
+        this.deps.onGameOver?.(this.state.score);
         return;
       }
       this.state.roundIndex += 1;

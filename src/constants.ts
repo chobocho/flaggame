@@ -179,6 +179,22 @@ export const SHAKE_INTENSITY = 9;
 // Particle origin offset from the character anchor (chest area)
 export const PARTICLE_ORIGIN_DY = -30;
 
+// High scores
+export const HIGHSCORE_TOP_N = 10;
+export const HIGHSCORE_TITLE = '🏆 최고 점수';
+export const HIGHSCORE_TITLE_SIZE = 20;
+export const HIGHSCORE_LINE_SIZE = 16;
+export const HIGHSCORE_LINE_GAP = 22;
+export const HIGHSCORE_PANEL_W = 320;
+export const HIGHSCORE_PANEL_PAD_X = 16;
+export const HIGHSCORE_PANEL_PAD_Y = 14;
+export const HIGHSCORE_PANEL_BG = 'rgba(15, 23, 42, 0.85)';
+export const HIGHSCORE_PANEL_BORDER = '#475569';
+export const HIGHSCORE_RANK_COLOR = '#fde68a';
+export const HIGHSCORE_SCORE_COLOR = '#f8fafc';
+export const HIGHSCORE_DATE_COLOR = '#94a3b8';
+export const HIGHSCORE_EMPTY_TEXT = '아직 기록이 없습니다';
+
 // Game over
 export const GAMEOVER_TITLE = 'GAME OVER';
 export const GAMEOVER_TITLE_SIZE = 56;

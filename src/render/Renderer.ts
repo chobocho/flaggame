@@ -4,6 +4,7 @@ import { drawHUD } from './drawHUD';
 import type { GameState } from '../engine/StateManager';
 import type { EffectsManager } from './effects';
 import type { ViewportTransform } from '../util/canvas';
+import type { ScoreEntry } from '../highscores/HighScores';
 
 export class Renderer {
   constructor(
@@ -11,7 +12,12 @@ export class Renderer {
     private readonly effects: EffectsManager,
   ) {}
 
-  draw(state: GameState, vp: ViewportTransform, time: number): void {
+  draw(
+    state: GameState,
+    vp: ViewportTransform,
+    time: number,
+    topScores: ReadonlyArray<ScoreEntry>,
+  ): void {
     const ctx = this.ctx;
     const vw = vp.virtualWidth;
     const vh = vp.virtualHeight;
@@ -29,6 +35,6 @@ export class Renderer {
     this.effects.drawParticles(ctx, originX, originY);
     ctx.restore();
 
-    drawHUD(ctx, state, vw, vh);
+    drawHUD(ctx, state, vw, vh, topScores);
   }
 }

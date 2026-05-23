@@ -13,6 +13,8 @@ import { InputManager } from '../input/InputManager';
 import { PointerManager } from '../input/PointerManager';
 import { mulberry32 } from '../util/rng';
 import { difficultyForRound } from './difficulty';
+import { HighScores, type ScoreEntry } from '../highscores/HighScores';
+import { HIGHSCORE_TOP_N } from '../constants';
 
 export class GameEngine {
   private readonly ctx: CanvasRenderingContext2D;
@@ -21,6 +23,8 @@ export class GameEngine {
   private readonly input: InputManager;
   private readonly pointer: PointerManager;
   private readonly effects: EffectsManager;
+  private readonly highScores: HighScores;
+  private topScores: ScoreEntry[] = [];
   private viewport: ViewportTransform;
   private lastTime = 0;
   private elapsed = 0;
@@ -39,6 +43,9 @@ export class GameEngine {
       this.viewport = fitCanvas(canvas);
     });
 
+    this.highScores = new HighScores();
+    void this.refreshTopScores();
+
     const seed = (Date.now() ^ Math.floor(Math.random() * 0xffffffff)) >>> 0;
     this.stateManager = new StateManager({
       generator: new CommandGenerator(mulberry32(seed)),
@@ -47,6 +54,9 @@ export class GameEngine {
       onOutcome: outcome => {
         if (outcome === 'SUCCESS') this.effects.successBurst();
         else this.effects.failShake();
+      },
+      onGameOver: finalScore => {
+        void this.recordScore(finalScore);
       },
     });
 
@@ -63,6 +73,28 @@ export class GameEngine {
       onHelpToggle: () => this.stateManager.toggleHelp(),
       onPauseToggle: () => this.stateManager.togglePause(),
     });
+  }
+
+  private async refreshTopScores(): Promise<void> {
+    try {
+      await this.highScores.open();
+      this.topScores = await this.highScores.getTop(HIGHSCORE_TOP_N);
+    } catch {
+      this.topScores = [];
+    }
+  }
+
+  private async recordScore(score: number): Promise<void> {
+    if (score <= 0) {
+      await this.refreshTopScores();
+      return;
+    }
+    try {
+      await this.highScores.add({ score, date: Date.now() });
+    } catch {
+      // Swallow — the rendered list will simply not include this score.
+    }
+    await this.refreshTopScores();
   }
 
   private handleStartKey(code: string): void {
@@ -120,6 +152,6 @@ export class GameEngine {
 
   private render(): void {
     applyViewport(this.ctx, this.viewport);
-    this.renderer.draw(this.stateManager.state, this.viewport, this.elapsed);
+    this.renderer.draw(this.stateManager.state, this.viewport, this.elapsed, this.topScores);
   }
 }

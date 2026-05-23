@@ -69,9 +69,24 @@ import {
   PAUSE_HINT,
   PAUSE_HINT_SIZE,
   PAUSE_HINT_COLOR,
+  HIGHSCORE_TITLE,
+  HIGHSCORE_TITLE_SIZE,
+  HIGHSCORE_LINE_SIZE,
+  HIGHSCORE_LINE_GAP,
+  HIGHSCORE_PANEL_W,
+  HIGHSCORE_PANEL_PAD_X,
+  HIGHSCORE_PANEL_PAD_Y,
+  HIGHSCORE_PANEL_BG,
+  HIGHSCORE_PANEL_BORDER,
+  HIGHSCORE_RANK_COLOR,
+  HIGHSCORE_SCORE_COLOR,
+  HIGHSCORE_DATE_COLOR,
+  HIGHSCORE_EMPTY_TEXT,
+  HIGHSCORE_TOP_N,
 } from '../constants';
 import type { GameState } from '../engine/StateManager';
 import type { FlagsState } from '../types';
+import type { ScoreEntry } from '../highscores/HighScores';
 import { computeUiButtons, type Rect, type UiButtons } from './uiLayout';
 
 export function drawHUD(
@@ -79,11 +94,13 @@ export function drawHUD(
   state: GameState,
   vw: number,
   vh: number,
+  topScores: ReadonlyArray<ScoreEntry>,
 ): void {
   const ui = computeUiButtons(vw, vh);
 
   if (state.phase === 'IDLE') {
     drawStartPrompt(ctx, vw, vh);
+    drawHighScorePanel(ctx, vw, vh, topScores);
     drawIconButton(ctx, ui.help, '❓', false);
     if (state.helpOpen) drawHelpOverlay(ctx, vw, vh);
     return;
@@ -104,8 +121,14 @@ export function drawHUD(
   if (state.phase !== 'GAME_OVER') drawIconButton(ctx, ui.pause, state.paused ? '▶' : '⏸', state.paused);
   drawIconButton(ctx, ui.help, '❓', state.helpOpen);
 
-  if (state.phase === 'GAME_OVER') drawGameOver(ctx, state.score, vw, vh);
-  if (state.paused) drawPauseOverlay(ctx, vw, vh);
+  if (state.phase === 'GAME_OVER') {
+    drawGameOver(ctx, state.score, vw, vh);
+    drawHighScorePanel(ctx, vw, vh, topScores);
+  }
+  if (state.paused) {
+    drawPauseOverlay(ctx, vw, vh);
+    drawHighScorePanel(ctx, vw, vh, topScores);
+  }
   if (state.helpOpen) drawHelpOverlay(ctx, vw, vh);
 }
 
@@ -325,6 +348,75 @@ function drawHelpOverlay(ctx: CanvasRenderingContext2D, vw: number, vh: number):
   ctx.fillStyle = HELP_HINT_COLOR;
   ctx.font = `${HELP_HINT_SIZE}px ${HUD_FONT}`;
   ctx.fillText(HELP_HINT, vw / 2, vh - 56);
+}
+
+function drawHighScorePanel(
+  ctx: CanvasRenderingContext2D,
+  vw: number,
+  vh: number,
+  topScores: ReadonlyArray<ScoreEntry>,
+): void {
+  const rows = Math.min(HIGHSCORE_TOP_N, topScores.length);
+  const bodyRows = Math.max(rows, 1);
+  const w = Math.min(HIGHSCORE_PANEL_W, vw - 32);
+  const h = HIGHSCORE_PANEL_PAD_Y * 2 + HIGHSCORE_TITLE_SIZE + 10 + bodyRows * HIGHSCORE_LINE_GAP;
+  const x = (vw - w) / 2;
+  // Pin to bottom area, but above the bottom prompts.
+  const y = Math.max(64, vh - 92 - h);
+
+  // Panel
+  ctx.fillStyle = HIGHSCORE_PANEL_BG;
+  ctx.strokeStyle = HIGHSCORE_PANEL_BORDER;
+  ctx.lineWidth = 2;
+  roundRect(ctx, x, y, w, h, 12);
+  ctx.fill();
+  ctx.stroke();
+
+  // Title
+  ctx.fillStyle = HIGHSCORE_RANK_COLOR;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
+  ctx.font = `bold ${HIGHSCORE_TITLE_SIZE}px ${HUD_FONT}`;
+  ctx.fillText(HIGHSCORE_TITLE, x + w / 2, y + HIGHSCORE_PANEL_PAD_Y);
+
+  const bodyTop = y + HIGHSCORE_PANEL_PAD_Y + HIGHSCORE_TITLE_SIZE + 8;
+
+  if (rows === 0) {
+    ctx.fillStyle = HIGHSCORE_DATE_COLOR;
+    ctx.font = `${HIGHSCORE_LINE_SIZE}px ${HUD_FONT}`;
+    ctx.fillText(HIGHSCORE_EMPTY_TEXT, x + w / 2, bodyTop + HIGHSCORE_LINE_GAP / 2);
+    return;
+  }
+
+  ctx.font = `${HIGHSCORE_LINE_SIZE}px ${HUD_FONT}`;
+  ctx.textBaseline = 'middle';
+  for (let i = 0; i < rows; i++) {
+    const entry = topScores[i]!;
+    const lineY = bodyTop + i * HIGHSCORE_LINE_GAP + HIGHSCORE_LINE_GAP / 2;
+    const rankText = `${i + 1}.`;
+    const scoreText = entry.score.toLocaleString();
+    const dateText = formatScoreDate(entry.date);
+
+    ctx.fillStyle = HIGHSCORE_RANK_COLOR;
+    ctx.textAlign = 'left';
+    ctx.fillText(rankText, x + HIGHSCORE_PANEL_PAD_X, lineY);
+
+    ctx.fillStyle = HIGHSCORE_SCORE_COLOR;
+    ctx.textAlign = 'right';
+    ctx.fillText(scoreText, x + w / 2 + 30, lineY);
+
+    ctx.fillStyle = HIGHSCORE_DATE_COLOR;
+    ctx.textAlign = 'right';
+    ctx.fillText(dateText, x + w - HIGHSCORE_PANEL_PAD_X, lineY);
+  }
+}
+
+function formatScoreDate(ms: number): string {
+  const d = new Date(ms);
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
 }
 
 function drawPauseOverlay(ctx: CanvasRenderingContext2D, vw: number, vh: number): void {
