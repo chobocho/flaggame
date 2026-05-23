@@ -1,176 +1,300 @@
-CTYPE html>
+<!DOCTYPE html>
 <html lang="ko">
 <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>청기 백기 게임 - 시스템 설계 문서</title>
-        <style>
-            :root {
-                        --bg-color: #0f172a;
-                        --text-color: #e2e8f0;
-                        --blue-flag: #3b82f6;
-                        --white-flag: #f8fafc;
-                        --accent: #10b981;
-                        --card-bg: #1e293b;
-                    }
-                    body {
-                        font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
-                        background-color: var(--bg-color);
-                        color: var(--text-color);
-                        line-height: 1.6;
-                        max-width: 1000px;
-                        margin: 0 auto;
-                        padding: 2rem;
-                    }
-                    h1, h2, h3 { color: #fff; border-bottom: 1px solid #334155; padding-bottom: 0.5rem; }
-                    h1 { font-size: 2.5rem; text-align: center; border-bottom: 2px solid var(--accent); }
-                    .section { background: var(--card-bg); padding: 2rem; border-radius: 8px; margin-bottom: 2rem; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
-                    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
-                    code { background: #000; padding: 0.2rem 0.4rem; border-radius: 4px; color: #38bdf8; font-family: monospace; }
-                    .svg-container { text-align: center; margin: 2rem 0; background: #000; border-radius: 8px; padding: 1rem; }
-                    ul.todo-list { list-style: none; padding: 0; }
-                    ul.todo-list li { margin-bottom: 1rem; padding: 1rem; background: #0f172a; border-left: 4px solid var(--accent); border-radius: 4px; }
-                    .tag { display: inline-block; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.8rem; font-weight: bold; margin-right: 0.5rem; }
-                    .tag.phase { background: var(--accent); color: #000; }
-                    table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
-                    th, td { padding: 0.75rem; border: 1px solid #334155; text-align: left; }
-                    th { background: #0f172a; }
-                </style>
-    </head>
-  <body>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>청기 백기 게임 - 시스템 설계 문서</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --text-color: #e2e8f0;
+            --blue-flag: #3b82f6;
+            --white-flag: #f8fafc;
+            --accent: #10b981;
+            --card-bg: #1e293b;
+        }
 
-      <h1>🚩 청기 백기 게임 (TS + Canvas) 설계 문서</h1>
+        body {
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
 
-        <div class="section">
-            <h2>1. 프로젝트 개요</h2>
-              <p>25년 전 오락실/TV에서 유행하던 클래식 '청기 백기' 게임의 웹 버전. 음성 명령(여성 목소리)에 따라 사용자가 키보드로 반응하는 체감형 순발력 게임입니다.</p>
-              <ul>
-                  <li><strong>기술 스택:</strong> HTML5 Canvas, TypeScript, Web Audio API / Web Speech API (TTS)</li>
-                    <li><strong>렌더링:</strong> 100% Canvas API를 활용한 프레임 기반 렌더링 (DOM 요소 최소화)</li>
-                    <li><strong>오디오:</strong> <code>window.speechSynthesis</code>를 사용해 한국어 여성 음성(ko-KR)으로 명령 하달</li>
-                </ul>
-          </div>
+        h1, h2, h3 {
+            color: #fff;
+            border-bottom: 1px solid #334155;
+            padding-bottom: 0.5rem;
+        }
 
-        <div class="grid">
-              <div class="section">
-                    <h2>2. 코어 메커니즘 & 조작</h2>
-                    <table>
-                        <tr>
-                              <th>동작</th>
-                                <th>단축키 (키보드)</th>
-                                <th>상태 변화</th>
-                            </tr>
-                          <tr>
-                                <td>청기 올리기</td>
-                                <td><code>Q</code></td>
-                                <td>Blue: UP</td>
-                            </tr>
-                          <tr>
-                                <td>청기 내리기</td>
-                                <td><code>A</code></td>
-                                <td>Blue: DOWN</td>
-                            </tr>
-                          <tr>
-                                <td>백기 올리기</td>
-                                <td><code>P</code></td>
-                                <td>White: UP</td>
-                            </tr>
-                          <tr>
-                                <td>백기 내리기</td>
-                                <td><code>L</code></td>
-                                <td>White: DOWN</td>
-                            </tr>
-                      </table>
-                    <p>* <em>명령이 끝난 후 제한 시간(예: 1.5초) 내에 요구되는 깃발 상태와 현재 상태가 일치해야 성공.</em></p>
-                </div>
+        h1 {
+            font-size: 2.5rem;
+            text-align: center;
+            border-bottom: 2px solid var(--accent);
+        }
 
-              <div class="section">
-                    <h2>3. 시스템 아키텍처</h2>
-                    <ul>
-                          <li><code>GameEngine</code>: requestAnimationFrame 기반 메인 루프, Delta Time 계산</li>
-                          <li><code>StateManager</code>: 대기 -> 명령 재생 -> 입력 대기 -> 판정 -> (반복/종료)의 FSM 관리</li>
-                          <li><code>CommandGenerator</code>: 난이도에 따른 논리적 명령 생성기 (단일, 연속, 부정형)</li>
-                          <li><code>VoiceManager</code>: Web Speech API 제어, 텍스트 파싱 및 발화 타이밍 동기화</li>
-                          <li><code>Renderer</code>: Canvas 컨텍스트 관리, 캐릭터/깃발/스코어/타이머 드로잉</li>
-                      </ul>
-                </div>
-          </div>
+        .section {
+            background: var(--card-bg);
+            padding: 2rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
 
-        <div class="section">
-              <h2>4. UI/UX 개념도 (Canvas Rendering Target)</h2>
-              <div class="svg-container">
-                    <!-- Canvas가 그려낼 최종 화면에 대한 개념적인 SVG Mockup -->
-                    <svg viewBox="0 0 800 500" width="100%" max-width="800px" xmlns="http://www.w3.org/2000/svg">
-                        <!-- Background -->
-                        <rect width="800" height="500" fill="#1e293b" />
-                        
-                        <!-- UI Elements -->
-                        <text x="40" y="50" fill="#e2e8f0" font-size="24" font-family="sans-serif">SCORE: 1,250</text>
-                          <text x="650" y="50" fill="#ef4444" font-size="24" font-family="sans-serif">LIFE: ♥ ♥ ♥</text>
-                          
-                          <!-- Command Text (Subtitle) -->
-                          <rect x="150" y="80" width="500" height="60" rx="10" fill="#0f172a" stroke="#38bdf8" stroke-width="2"/>
-                          <text x="400" y="120" fill="#38bdf8" font-size="28" font-family="sans-serif" font-weight="bold" text-anchor="middle">"청기 내리지 말고 백기 올려!"</text>
-                          
-                          <!-- Timer Bar -->
-                          <rect x="250" y="160" width="300" height="10" rx="5" fill="#334155"/>
-                          <rect x="250" y="160" width="200" height="10" rx="5" fill="#10b981"/> <!-- 66% remaining -->
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
 
-                          <!-- Character Base -->
-                          <circle cx="400" cy="280" r="40" fill="#facc15" /> <!-- Head -->
-                          <rect x="375" y="320" width="50" height="80" rx="10" fill="#e2e8f0" /> <!-- Body -->
-                          
-                          <!-- Blue Flag (Left Hand - Currently DOWN) -->
-                          <line x1="375" y1="340" x2="300" y2="400" stroke="#facc15" stroke-width="12" stroke-linecap="round"/> <!-- Arm -->
-                          <line x1="300" y1="400" x2="300" y2="250" stroke="#8b5cf6" stroke-width="6" /> <!-- Pole -->
-                          <rect x="230" y="250" width="70" height="50" fill="#3b82f6" /> <!-- Flag -->
+        code {
+            background: #000;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            color: #38bdf8;
+            font-family: monospace;
+        }
 
-                          <!-- White Flag (Right Hand - Currently UP) -->
-                          <line x1="425" y1="340" x2="500" y2="260" stroke="#facc15" stroke-width="12" stroke-linecap="round"/> <!-- Arm -->
-                          <line x1="500" y1="260" x2="500" y2="110" stroke="#8b5cf6" stroke-width="6" /> <!-- Pole -->
-                          <rect x="500" y="110" width="70" height="50" fill="#f8fafc" /> <!-- Flag -->
+        .svg-container {
+            text-align: center;
+            margin: 2rem 0;
+            background: #000;
+            border-radius: 8px;
+            padding: 1rem;
+        }
 
-                          <!-- Keystroke Hints -->
-                          <text x="250" y="450" fill="#94a3b8" font-size="20" font-family="sans-serif" text-anchor="middle">Q (올림) / A (내림)</text>
-                          <text x="550" y="450" fill="#94a3b8" font-size="20" font-family="sans-serif" text-anchor="middle">P (올림) / L (내림)</text>
-                      </svg>
-                </div>
-              <p style="text-align: center; color: #94a3b8; font-size: 0.9rem;">* 위 화면은 HTML5 Canvas API의 fillRect, arc, lineTo 등을 사용하여 구현됩니다.</p>
-          </div>
+        ul.todo-list {
+            list-style: none;
+            padding: 0;
+        }
 
-        <div class="section">
-              <h2>5. 클로드(Claude) 구현 진행 TODO 리스트</h2>
-              <p>클로드에게 아래의 단계를 순차적으로 요청하여 개발을 진행하세요.</p>
-              <ul class="todo-list">
-                    <li>
-                          <span class="tag phase">Phase 1</span> <strong>프로젝트 스캐폴딩 및 게임 루프 구축</strong>
-                          <p>Vite + TypeScript 환경 구성. index.html에 단일 <code>&lt;canvas&gt;</code> 요소 배치. <code>requestAnimationFrame</code>을 활용한 기본 GameLoop 클래스 및 화면 클리어 로직 작성.</p>
-                      </li>
-                    <li>
-                          <span class="tag phase">Phase 2</span> <strong>Canvas 렌더링 시스템 (캐릭터 & 깃발)</strong>
-                          <p><code>Renderer</code> 클래스 구현. 양손의 상태(UP/DOWN)에 따라 깃발의 위치와 팔의 각도가 변하는 로직 작성. 청기(Left), 백기(Right) 색상 상수화.</p>
-                      </li>
-                    <li>
-                          <span class="tag phase">Phase 3</span> <strong>명령어 생성기 (Command Generator) 논리 구현</strong>
-                          <p>단순 명령("청기 올려")부터 복합 함정 명령("청기 올리지 말고 백기 내려")까지 텍스트를 생성하고, 해당 명령 수행 후 기대되는 <strong>최종 목표 상태(Target State)</strong>를 계산하는 로직 구현.</p>
-                      </li>
-                    <li>
-                          <span class="tag phase">Phase 4</span> <strong>TTS (Web Speech API) 연동</strong>
-                          <p><code>VoiceManager</code>를 구현하여 Phase 3에서 생성된 텍스트를 한국어 여성 음성으로 재생. <code>onend</code> 이벤트를 캐치하여 사용자의 입력 대기 타이머(Timer)를 작동시키는 상태 동기화.</p>
-                      </li>
-                    <li>
-                          <span class="tag phase">Phase 5</span> <strong>입력 처리 및 판정 로직</strong>
-                          <p>키보드(Q, A, P, L) 이벤트를 수신하여 깃발 상태 변경. 타이머 종료 시점의 깃발 상태와 Phase 3의 목표 상태를 비교하여 Success/Fail 판정 및 목숨(Life) 차감 로직 구현.</p>
-                      </li>
-                    <li>
-                          <span class="tag phase">Phase 6</span> <strong>난이도 커브 및 폴리싱</strong>
-                          <p>스테이지가 오를수록 제한 시간이 짧아지고, 복합/부정 명령의 등장 확률이 높아지도록 조정. 성공/실패 시 Canvas 파티클 효과나 화면 흔들림(Screen Shake) 효과 추가.</p>
-                      </li>
-                </ul>
-          </div>
+        ul.todo-list li {
+            margin-bottom: 1rem;
+            padding: 1rem;
+            background: #0f172a;
+            border-left: 4px solid var(--accent);
+            border-radius: 4px;
+        }
 
-    </body>
-  </html>
-</strong></code></p></span></text></svg></em></code></td></th></tr></table></code></strong></li></ul></p></h2></div></h1></body>
-            }
-            }</style></title></head></html>
+        .tag {
+            display: inline-block;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            margin-right: 0.5rem;
+        }
+
+        .tag.phase {
+            background: var(--accent);
+            color: #000;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        th, td {
+            padding: 0.75rem;
+            border: 1px solid #334155;
+            text-align: left;
+        }
+
+        th {
+            background: #0f172a;
+        }
+    </style>
+</head>
+<body>
+
+<h1>🚩 청기 백기 게임 (TS + Canvas) 설계 문서</h1>
+
+<div class="section">
+    <h2>1. 프로젝트 개요</h2>
+    <p>25년 전 오락실/TV에서 유행하던 클래식 '청기 백기' 게임의 웹 버전. 음성 명령(여성 목소리)에 따라 사용자가 키보드로 반응하는 체감형 순발력 게임입니다.</p>
+    <ul>
+        <li><strong>기술 스택:</strong> HTML5 Canvas, TypeScript, Web Audio API / Web Speech API (TTS)</li>
+        <li><strong>렌더링:</strong> 100% Canvas API를 활용한 프레임 기반 렌더링 (DOM 요소 최소화)</li>
+        <li><strong>오디오:</strong> <code>window.speechSynthesis</code>를 사용해 한국어 여성 음성(ko-KR)으로 명령 하달</li>
+    </ul>
+</div>
+
+<div class="grid">
+    <div class="section">
+        <h2>2. 코어 메커니즘 & 조작</h2>
+        <table>
+            <tr>
+                <th>동작</th>
+                <th>단축키 (키보드)</th>
+                <th>상태 변화</th>
+            </tr>
+            <tr>
+                <td>청기 올리기</td>
+                <td><code>Q</code></td>
+                <td>Blue: UP</td>
+            </tr>
+            <tr>
+                <td>청기 내리기</td>
+                <td><code>A</code></td>
+                <td>Blue: DOWN</td>
+            </tr>
+            <tr>
+                <td>백기 올리기</td>
+                <td><code>P</code></td>
+                <td>White: UP</td>
+            </tr>
+            <tr>
+                <td>백기 내리기</td>
+                <td><code>L</code></td>
+                <td>White: DOWN</td>
+            </tr>
+        </table>
+        <p>* <em>명령이 끝난 후 제한 시간(예: 1.5초) 내에 요구되는 깃발 상태와 현재 상태가 일치해야 성공.</em></p>
+    </div>
+
+    <div class="section">
+        <h2>3. 시스템 아키텍처</h2>
+        <ul>
+            <li><code>GameEngine</code>: requestAnimationFrame 기반 메인 루프, Delta Time 계산</li>
+            <li><code>StateManager</code>: 대기 -> 명령 재생 -> 입력 대기 -> 판정 -> (반복/종료)의 FSM 관리</li>
+            <li><code>CommandGenerator</code>: 난이도에 따른 논리적 명령 생성기 (단일, 연속, 부정형)</li>
+            <li><code>VoiceManager</code>: Web Speech API 제어, 텍스트 파싱 및 발화 타이밍 동기화</li>
+            <li><code>Renderer</code>: Canvas 컨텍스트 관리, 캐릭터/깃발/스코어/타이머 드로잉</li>
+        </ul>
+    </div>
+</div>
+
+<div class="section">
+    <h2>4. UI/UX 개념도 (Canvas Rendering Target)</h2>
+    <div class="svg-container">
+        <!-- Canvas가 그려낼 최종 화면에 대한 개념적인 SVG Mockup -->
+        <svg viewBox="0 0 800 500" width="100%" max-width="800px" xmlns="http://www.w3.org/2000/svg">
+            <!-- Background -->
+            <rect width="800" height="500" fill="#1e293b"/>
+
+            <!-- UI Elements -->
+            <text x="40" y="50" fill="#e2e8f0" font-size="24" font-family="sans-serif">SCORE: 1,250</text>
+            <text x="650" y="50" fill="#ef4444" font-size="24" font-family="sans-serif">LIFE: ♥ ♥ ♥</text>
+
+            <!-- Command Text (Subtitle) -->
+            <rect x="150" y="80" width="500" height="60" rx="10" fill="#0f172a" stroke="#38bdf8" stroke-width="2"/>
+            <text x="400" y="120" fill="#38bdf8" font-size="28" font-family="sans-serif" font-weight="bold"
+                  text-anchor="middle">"청기 내리지 말고 백기 올려!"
+            </text>
+
+            <!-- Timer Bar -->
+            <rect x="250" y="160" width="300" height="10" rx="5" fill="#334155"/>
+            <rect x="250" y="160" width="200" height="10" rx="5" fill="#10b981"/> <!-- 66% remaining -->
+
+            <!-- Character Base -->
+            <circle cx="400" cy="280" r="40" fill="#facc15"/> <!-- Head -->
+            <rect x="375" y="320" width="50" height="80" rx="10" fill="#e2e8f0"/> <!-- Body -->
+
+            <!-- Blue Flag (Left Hand - Currently DOWN) -->
+            <line x1="375" y1="340" x2="300" y2="400" stroke="#facc15" stroke-width="12" stroke-linecap="round"/>
+            <!-- Arm -->
+            <line x1="300" y1="400" x2="300" y2="250" stroke="#8b5cf6" stroke-width="6"/> <!-- Pole -->
+            <rect x="230" y="250" width="70" height="50" fill="#3b82f6"/> <!-- Flag -->
+
+            <!-- White Flag (Right Hand - Currently UP) -->
+            <line x1="425" y1="340" x2="500" y2="260" stroke="#facc15" stroke-width="12" stroke-linecap="round"/>
+            <!-- Arm -->
+            <line x1="500" y1="260" x2="500" y2="110" stroke="#8b5cf6" stroke-width="6"/> <!-- Pole -->
+            <rect x="500" y="110" width="70" height="50" fill="#f8fafc"/> <!-- Flag -->
+
+            <!-- Keystroke Hints -->
+            <text x="250" y="450" fill="#94a3b8" font-size="20" font-family="sans-serif" text-anchor="middle">Q (올림) / A
+                (내림)
+            </text>
+            <text x="550" y="450" fill="#94a3b8" font-size="20" font-family="sans-serif" text-anchor="middle">P (올림) / L
+                (내림)
+            </text>
+        </svg>
+    </div>
+    <p style="text-align: center; color: #94a3b8; font-size: 0.9rem;">* 위 화면은 HTML5 Canvas API의 fillRect, arc, lineTo 등을
+        사용하여 구현됩니다.</p>
+</div>
+
+<div class="section">
+    <h2>5. 클로드(Claude) 구현 진행 TODO 리스트</h2>
+    <p>클로드에게 아래의 단계를 순차적으로 요청하여 개발을 진행하세요.</p>
+    <ul class="todo-list">
+        <li>
+            <span class="tag phase">Phase 1</span> <strong>프로젝트 스캐폴딩 및 게임 루프 구축</strong>
+            <p>Vite + TypeScript 환경 구성. index.html에 단일 <code>&lt;canvas&gt;</code> 요소 배치.
+                <code>requestAnimationFrame</code>을 활용한 기본 GameLoop 클래스 및 화면 클리어 로직 작성.</p>
+        </li>
+        <li>
+            <span class="tag phase">Phase 2</span> <strong>Canvas 렌더링 시스템 (캐릭터 & 깃발)</strong>
+            <p><code>Renderer</code> 클래스 구현. 양손의 상태(UP/DOWN)에 따라 깃발의 위치와 팔의 각도가 변하는 로직 작성. 청기(Left), 백기(Right) 색상 상수화.
+            </p>
+        </li>
+        <li>
+            <span class="tag phase">Phase 3</span> <strong>명령어 생성기 (Command Generator) 논리 구현</strong>
+            <p>단순 명령("청기 올려")부터 복합 함정 명령("청기 올리지 말고 백기 내려")까지 텍스트를 생성하고, 해당 명령 수행 후 기대되는 <strong>최종 목표 상태(Target
+                State)</strong>를 계산하는 로직 구현.</p>
+        </li>
+        <li>
+            <span class="tag phase">Phase 4</span> <strong>TTS (Web Speech API) 연동</strong>
+            <p><code>VoiceManager</code>를 구현하여 Phase 3에서 생성된 텍스트를 한국어 여성 음성으로 재생. <code>onend</code> 이벤트를 캐치하여 사용자의 입력
+                대기 타이머(Timer)를 작동시키는 상태 동기화.</p>
+        </li>
+        <li>
+            <span class="tag phase">Phase 5</span> <strong>입력 처리 및 판정 로직</strong>
+            <p>키보드(Q, A, P, L) 이벤트를 수신하여 깃발 상태 변경. 타이머 종료 시점의 깃발 상태와 Phase 3의 목표 상태를 비교하여 Success/Fail 판정 및 목숨(Life) 차감
+                로직 구현.</p>
+        </li>
+        <li>
+            <span class="tag phase">Phase 6</span> <strong>난이도 커브 및 폴리싱</strong>
+            <p>스테이지가 오를수록 제한 시간이 짧아지고, 복합/부정 명령의 등장 확률이 높아지도록 조정. 성공/실패 시 Canvas 파티클 효과나 화면 흔들림(Screen Shake) 효과 추가.</p>
+        </li>
+        <li>
+            <span class="tag phase">Phase 7</span> <strong>도움말(Help) 시스템</strong>
+            <p>키보드: <code>F1</code> 키로 도움말 오버레이 표시/숨김. 모바일: 화면 우상단에 ❓ 이모지 헬프 아이콘 추가하여 터치로 동일한 도움말 오버레이 호출.</p>
+        </li>
+        <li>
+            <span class="tag phase">Phase 8</span> <strong>모바일 터치 입력 지원</strong>
+            <p>모바일/태블릿에서 청기/백기 올리기·내리기를 터치로 조작할 수 있도록 화면에 가상 버튼(Q/A/P/L에 대응) 배치. <code>touchstart</code> 이벤트 처리 및 키보드 입력과 동일한 판정 로직 적용.</p>
+        </li>
+        <li>
+            <span class="tag phase">Phase 9</span> <strong>갤럭시 폴드 반응형 렌더링 수정</strong>
+            <p>갤럭시 폴드7 접힌 화면(커버 디스플레이) 및 펼친 화면(메인 디스플레이) 양쪽에서 Canvas가 올바른 비율로 그려지지 않는 버그 수정. <code>window.resize</code> / <code>orientationchange</code> / <code>visualViewport</code> 이벤트 대응 및 DPR(devicePixelRatio) 재계산 로직 보강.</p>
+        </li>
+        <li>
+            <span class="tag phase">Phase 10</span> <strong>일시 정지 / 이어하기 기능</strong>
+            <p>일시 정지(Pause) 및 이어하기(Resume) 버튼 추가 (키보드 단축키 + 화면 버튼). 일시 정지 중에는 GameLoop·타이머·TTS를 모두 멈추고, 이어하기 시 정확한 시점부터 재개되도록 상태 보존.</p>
+        </li>
+        <li>
+            <span class="tag phase">Phase 11</span> <strong>TTS↔타이머 사이 입력 공백 제거</strong>
+            <p>음성 명령 재생 완료 후 타이머 바가 그려지기 전까지 짧은 딜레이 동안 키보드 입력이 무시되는 문제 수정. <code>speechSynthesis.onend</code> 시점부터 입력을 즉시 수신·버퍼링하여, 타이머 시작과 동시에 판정 대상에 포함되도록 처리.</p>
+        </li>
+        <li>
+            <span class="tag phase">Phase 12</span> <strong>시작 화면 단축키 안내</strong>
+            <p>게임 시작(타이틀) 화면에 조작 단축키 설명 표시: <code>Q</code>(청기 올림) / <code>A</code>(청기 내림) / <code>P</code>(백기 올림) / <code>L</code>(백기 내림), <code>F1</code>(도움말), <code>Space</code>(시작/재시작) 등.</p>
+        </li>
+        <li>
+            <span class="tag phase">Phase 13</span> <strong>게임 오버 재시작 키 변경</strong>
+            <p>게임 오버 화면에서 <code>Space</code> 키로 재시작 가능하도록 입력 처리 추가. 안내 문구도 "Press SPACE to Restart"로 갱신.</p>
+        </li>
+        <li>
+            <span class="tag phase">Phase 14</span> <strong>캐릭터 일러스트 교체 및 애니메이션</strong>
+            <p>현재의 도형 기반 캐릭터를 만화풍의 예쁜 2D 여성 캐릭터 이미지(스프라이트)로 교체. 깃발 올림/내림에 따른 팔 동작, 대기 시 호흡(아이들), 성공/실패 시 표정 변화 등 프레임 또는 스프라이트 시트 기반 애니메이션 적용. 단일 파일 빌드 유지를 위해 이미지는 Base64로 인라인 임베드.</p>
+        </li>
+        <li>
+            <span class="tag phase">Phase 15</span> <strong>깃발 이미지화 및 펄럭임 효과</strong>
+            <p>청기/백기를 단색 사각형이 아닌 이미지(천 질감 포함)로 교체. 바람에 흔들리는 듯한 펄럭임 애니메이션 적용 — 사인파 기반 정점 변형 또는 프레임 스프라이트 사용. 깃발 올림/내림 전환 시에도 자연스러운 흔들림 유지. 단일 파일 빌드 유지를 위해 Base64 인라인 임베드.</p>
+        </li>
+        <li>
+            <span class="tag phase">Phase 16</span> <strong>점수 연동 TTS 속도 가변화</strong>
+            <p>점수(또는 스테이지)가 올라갈수록 <code>SpeechSynthesisUtterance.rate</code> 값을 점진적으로 증가시켜 명령 발화 속도가 빨라지도록 구현. 최소/최대 rate 범위(예: 1.0 ~ 1.8)와 증가 곡선을 상수화하여 난이도 커브(Phase 6)와 일관되게 조정.</p>
+        </li>
+    </ul>
+</div>
+
+</body>
+</html>
