@@ -14,24 +14,37 @@ const STORE = 'highscores';
  * prune the store — IndexedDB compresses cheaply and keeping history makes
  * future "best month" / "stats" features trivial without a migration.
  *
- * Falls back gracefully when IndexedDB is not available (SSR, unit tests,
- * private browsing on some browsers) so the rest of the game keeps working.
+ * Falls back to an in-memory, session-only list when IndexedDB is missing
+ * (SSR, unit tests) or fails to open (private browsing, storage denied,
+ * blocked by another connection) so the rest of the game keeps working.
  */
 export class HighScores {
   private db: IDBDatabase | null = null;
   private memoryFallback: ScoreEntry[] = [];
-  private readonly available: boolean;
+  private ready: Promise<void> | null = null;
 
-  constructor() {
-    this.available = typeof indexedDB !== 'undefined';
-  }
-
-  async open(): Promise<void> {
-    if (!this.available) return;
-    this.db = await openDatabase();
+  /** Resolves once the single shared connection is open, or once IndexedDB
+   *  is determined unavailable (db stays null → memory fallback). Lazy and
+   *  cached so every add()/getTop() call sequences itself for free. */
+  private ensureOpen(): Promise<void> {
+    if (!this.ready) {
+      this.ready =
+        typeof indexedDB === 'undefined'
+          ? Promise.resolve()
+          : openDatabase().then(
+              db => {
+                this.db = db;
+              },
+              () => {
+                this.db = null;
+              },
+            );
+    }
+    return this.ready;
   }
 
   async add(entry: ScoreEntry): Promise<void> {
+    await this.ensureOpen();
     if (!this.db) {
       this.memoryFallback.push(entry);
       this.memoryFallback.sort(byScoreDesc);
@@ -47,6 +60,7 @@ export class HighScores {
   }
 
   async getTop(n: number): Promise<ScoreEntry[]> {
+    await this.ensureOpen();
     if (!this.db) {
       return this.memoryFallback.slice(0, n);
     }
@@ -55,7 +69,7 @@ export class HighScores {
       const store = tx.objectStore(STORE);
       const req = store.getAll();
       req.onsuccess = () => {
-        const all = (req.result as ScoreEntry[]).slice().sort(byScoreDesc);
+        const all = (req.result as ScoreEntry[]).sort(byScoreDesc);
         resolve(all.slice(0, n));
       };
       req.onerror = () => reject(req.error);
@@ -79,5 +93,8 @@ function openDatabase(): Promise<IDBDatabase> {
     };
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => reject(req.error);
+    // Without this a pending versionchange elsewhere would leave the
+    // promise unsettled forever; rejecting drops us to the memory fallback.
+    req.onblocked = () => reject(new Error('IndexedDB open blocked'));
   });
 }

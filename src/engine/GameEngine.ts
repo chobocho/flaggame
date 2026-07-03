@@ -77,18 +77,14 @@ export class GameEngine {
 
   private async refreshTopScores(): Promise<void> {
     try {
-      await this.highScores.open();
       this.topScores = await this.highScores.getTop(HIGHSCORE_TOP_N);
     } catch {
-      this.topScores = [];
+      // Keep whatever list we already have; a failed read shouldn't blank the panel.
     }
   }
 
   private async recordScore(score: number): Promise<void> {
-    if (score <= 0) {
-      await this.refreshTopScores();
-      return;
-    }
+    if (score <= 0) return;
     try {
       await this.highScores.add({ score, date: Date.now() });
     } catch {

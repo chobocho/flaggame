@@ -183,11 +183,22 @@ export const PARTICLE_ORIGIN_DY = -30;
 export const HIGHSCORE_TOP_N = 10;
 export const HIGHSCORE_TITLE = '🏆 최고 점수';
 export const HIGHSCORE_TITLE_SIZE = 20;
+export const HIGHSCORE_TITLE_GAP = 10;
 export const HIGHSCORE_LINE_SIZE = 16;
 export const HIGHSCORE_LINE_GAP = 22;
 export const HIGHSCORE_PANEL_W = 320;
 export const HIGHSCORE_PANEL_PAD_X = 16;
 export const HIGHSCORE_PANEL_PAD_Y = 14;
+export const HIGHSCORE_PANEL_RADIUS = 12;
+/** Right edge of the score column, offset from the panel center line. */
+export const HIGHSCORE_SCORE_COL_DX = 30;
+/** The panel lives between the centered overlay text and the bottom prompt
+ *  area. The game-over/pause hint line sits at vh/2 + 70 with a 22px font,
+ *  so 100 keeps the panel clear of it; 92 keeps it above the bottom prompts.
+ *  Rows that don't fit in this band are dropped (vh is always >= BASE_HEIGHT,
+ *  which still leaves room for the title plus several rows). */
+export const HIGHSCORE_PANEL_TOP_CLEARANCE = 100;
+export const HIGHSCORE_PANEL_BOTTOM_CLEARANCE = 92;
 export const HIGHSCORE_PANEL_BG = 'rgba(15, 23, 42, 0.85)';
 export const HIGHSCORE_PANEL_BORDER = '#475569';
 export const HIGHSCORE_RANK_COLOR = '#fde68a';

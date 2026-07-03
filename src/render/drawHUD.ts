@@ -71,6 +71,7 @@ import {
   PAUSE_HINT_COLOR,
   HIGHSCORE_TITLE,
   HIGHSCORE_TITLE_SIZE,
+  HIGHSCORE_TITLE_GAP,
   HIGHSCORE_LINE_SIZE,
   HIGHSCORE_LINE_GAP,
   HIGHSCORE_PANEL_W,
@@ -78,11 +79,14 @@ import {
   HIGHSCORE_PANEL_PAD_Y,
   HIGHSCORE_PANEL_BG,
   HIGHSCORE_PANEL_BORDER,
+  HIGHSCORE_PANEL_RADIUS,
+  HIGHSCORE_PANEL_TOP_CLEARANCE,
+  HIGHSCORE_PANEL_BOTTOM_CLEARANCE,
+  HIGHSCORE_SCORE_COL_DX,
   HIGHSCORE_RANK_COLOR,
   HIGHSCORE_SCORE_COLOR,
   HIGHSCORE_DATE_COLOR,
   HIGHSCORE_EMPTY_TEXT,
-  HIGHSCORE_TOP_N,
 } from '../constants';
 import type { GameState } from '../engine/StateManager';
 import type { FlagsState } from '../types';
@@ -100,33 +104,29 @@ export function drawHUD(
 
   if (state.phase === 'IDLE') {
     drawStartPrompt(ctx, vw, vh);
-    drawHighScorePanel(ctx, vw, vh, topScores);
     drawIconButton(ctx, ui.help, '❓', false);
-    if (state.helpOpen) drawHelpOverlay(ctx, vw, vh);
-    return;
+  } else {
+    drawScore(ctx, state.score);
+    drawLives(ctx, state.lives, vw);
+    if (state.command) drawSubtitle(ctx, state.command.text, vw);
+    if (state.phase === 'WAITING') drawTimerBar(ctx, state.timerMs, state.timerTotalMs, vw);
+    if (state.phase === 'JUDGING' && state.outcome) drawOutcome(ctx, state.outcome, vw, vh);
+
+    // Mobile/touch flag buttons. Hidden during GAME_OVER (only restart matters).
+    if (state.phase !== 'GAME_OVER') {
+      drawFlagButtons(ctx, ui, state.flags);
+    }
+
+    // Icon buttons (top-right). Pause hidden in GAME_OVER.
+    if (state.phase !== 'GAME_OVER') drawIconButton(ctx, ui.pause, state.paused ? '▶' : '⏸', state.paused);
+    drawIconButton(ctx, ui.help, '❓', state.helpOpen);
+
+    if (state.phase === 'GAME_OVER') drawGameOver(ctx, state.score, vw, vh);
+    if (state.paused) drawPauseOverlay(ctx, vw, vh);
   }
 
-  drawScore(ctx, state.score);
-  drawLives(ctx, state.lives, vw);
-  if (state.command) drawSubtitle(ctx, state.command.text, vw);
-  if (state.phase === 'WAITING') drawTimerBar(ctx, state.timerMs, state.timerTotalMs, vw);
-  if (state.phase === 'JUDGING' && state.outcome) drawOutcome(ctx, state.outcome, vw, vh);
-
-  // Mobile/touch flag buttons. Hidden during GAME_OVER (only restart matters).
-  if (state.phase !== 'GAME_OVER') {
-    drawFlagButtons(ctx, ui, state.flags);
-  }
-
-  // Icon buttons (top-right). Pause hidden in GAME_OVER.
-  if (state.phase !== 'GAME_OVER') drawIconButton(ctx, ui.pause, state.paused ? '▶' : '⏸', state.paused);
-  drawIconButton(ctx, ui.help, '❓', state.helpOpen);
-
-  if (state.phase === 'GAME_OVER') {
-    drawGameOver(ctx, state.score, vw, vh);
-    drawHighScorePanel(ctx, vw, vh, topScores);
-  }
-  if (state.paused) {
-    drawPauseOverlay(ctx, vw, vh);
+  // High scores appear whenever gameplay is inactive.
+  if (state.phase === 'IDLE' || state.phase === 'GAME_OVER' || state.paused) {
     drawHighScorePanel(ctx, vw, vh, topScores);
   }
   if (state.helpOpen) drawHelpOverlay(ctx, vw, vh);
@@ -356,19 +356,28 @@ function drawHighScorePanel(
   vh: number,
   topScores: ReadonlyArray<ScoreEntry>,
 ): void {
-  const rows = Math.min(HIGHSCORE_TOP_N, topScores.length);
+  // The panel is confined to the band between the centered overlay text
+  // (game-over / pause hints) and the bottom prompt area, so it can never
+  // cover either; rows beyond the band are dropped (short viewports like
+  // the Fold 7 unfolded main screen show fewer rows, tall ones show all).
+  const bandTop = vh / 2 + HIGHSCORE_PANEL_TOP_CLEARANCE;
+  const bandBottom = vh - HIGHSCORE_PANEL_BOTTOM_CLEARANCE;
+  const headerH = HIGHSCORE_PANEL_PAD_Y * 2 + HIGHSCORE_TITLE_SIZE + HIGHSCORE_TITLE_GAP;
+  const maxRows = Math.floor((bandBottom - bandTop - headerH) / HIGHSCORE_LINE_GAP);
+  if (maxRows < 1) return;
+
+  const rows = Math.min(topScores.length, maxRows);
   const bodyRows = Math.max(rows, 1);
-  const w = Math.min(HIGHSCORE_PANEL_W, vw - 32);
-  const h = HIGHSCORE_PANEL_PAD_Y * 2 + HIGHSCORE_TITLE_SIZE + 10 + bodyRows * HIGHSCORE_LINE_GAP;
+  const w = Math.min(HIGHSCORE_PANEL_W, vw - SUBTITLE_PANEL_MIN_SIDE_PAD * 2);
+  const h = headerH + bodyRows * HIGHSCORE_LINE_GAP;
   const x = (vw - w) / 2;
-  // Pin to bottom area, but above the bottom prompts.
-  const y = Math.max(64, vh - 92 - h);
+  const y = bandBottom - h;
 
   // Panel
   ctx.fillStyle = HIGHSCORE_PANEL_BG;
   ctx.strokeStyle = HIGHSCORE_PANEL_BORDER;
   ctx.lineWidth = 2;
-  roundRect(ctx, x, y, w, h, 12);
+  roundRect(ctx, x, y, w, h, HIGHSCORE_PANEL_RADIUS);
   ctx.fill();
   ctx.stroke();
 
@@ -379,36 +388,57 @@ function drawHighScorePanel(
   ctx.font = `bold ${HIGHSCORE_TITLE_SIZE}px ${HUD_FONT}`;
   ctx.fillText(HIGHSCORE_TITLE, x + w / 2, y + HIGHSCORE_PANEL_PAD_Y);
 
-  const bodyTop = y + HIGHSCORE_PANEL_PAD_Y + HIGHSCORE_TITLE_SIZE + 8;
+  const bodyTop = y + HIGHSCORE_PANEL_PAD_Y + HIGHSCORE_TITLE_SIZE + HIGHSCORE_TITLE_GAP;
+  ctx.font = `${HIGHSCORE_LINE_SIZE}px ${HUD_FONT}`;
+  ctx.textBaseline = 'middle';
 
   if (rows === 0) {
     ctx.fillStyle = HIGHSCORE_DATE_COLOR;
-    ctx.font = `${HIGHSCORE_LINE_SIZE}px ${HUD_FONT}`;
     ctx.fillText(HIGHSCORE_EMPTY_TEXT, x + w / 2, bodyTop + HIGHSCORE_LINE_GAP / 2);
     return;
   }
 
-  ctx.font = `${HIGHSCORE_LINE_SIZE}px ${HUD_FONT}`;
-  ctx.textBaseline = 'middle';
+  const display = displayRows(topScores);
   for (let i = 0; i < rows; i++) {
-    const entry = topScores[i]!;
+    const row = display[i]!;
     const lineY = bodyTop + i * HIGHSCORE_LINE_GAP + HIGHSCORE_LINE_GAP / 2;
-    const rankText = `${i + 1}.`;
-    const scoreText = entry.score.toLocaleString();
-    const dateText = formatScoreDate(entry.date);
 
     ctx.fillStyle = HIGHSCORE_RANK_COLOR;
     ctx.textAlign = 'left';
-    ctx.fillText(rankText, x + HIGHSCORE_PANEL_PAD_X, lineY);
+    ctx.fillText(row.rank, x + HIGHSCORE_PANEL_PAD_X, lineY);
 
     ctx.fillStyle = HIGHSCORE_SCORE_COLOR;
     ctx.textAlign = 'right';
-    ctx.fillText(scoreText, x + w / 2 + 30, lineY);
+    ctx.fillText(row.score, x + w / 2 + HIGHSCORE_SCORE_COL_DX, lineY);
 
     ctx.fillStyle = HIGHSCORE_DATE_COLOR;
     ctx.textAlign = 'right';
-    ctx.fillText(dateText, x + w - HIGHSCORE_PANEL_PAD_X, lineY);
+    ctx.fillText(row.date, x + w - HIGHSCORE_PANEL_PAD_X, lineY);
   }
+}
+
+interface HighScoreDisplayRow {
+  rank: string;
+  score: string;
+  date: string;
+}
+
+// The panel renders every frame while the game idles, but its text only
+// changes when a new topScores array arrives — cache the formatted strings
+// per array so the render loop does no Date/locale work.
+const displayRowCache = new WeakMap<ReadonlyArray<ScoreEntry>, HighScoreDisplayRow[]>();
+
+function displayRows(topScores: ReadonlyArray<ScoreEntry>): HighScoreDisplayRow[] {
+  let rows = displayRowCache.get(topScores);
+  if (!rows) {
+    rows = topScores.map((entry, i) => ({
+      rank: `${i + 1}.`,
+      score: entry.score.toLocaleString(),
+      date: formatScoreDate(entry.date),
+    }));
+    displayRowCache.set(topScores, rows);
+  }
+  return rows;
 }
 
 function formatScoreDate(ms: number): string {
